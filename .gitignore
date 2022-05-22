@@ -1,0 +1,11 @@
+# ide
+.idea
+
+# development
+.env
+.DS_Store
+
+# testing
+*.out
+coverage.xml
+report.xml

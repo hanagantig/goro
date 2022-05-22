@@ -1,0 +1,16 @@
+//goro:init logger
+package app
+
+import (
+	"log"
+	"{{ .Module }}/pkg/logger"
+)
+
+func (app *App) initLogger() {
+	l, err := logger.NewLogger()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	app.logger = l
+}
