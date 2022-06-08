@@ -1,0 +1,15 @@
+package repository
+
+import (
+    "github.com/jmoiron/sqlx"
+)
+
+type MyRepo struct {
+	conn *sqlx.DB
+}
+
+func NewMyRepo(conn *sqlx.DB) *MyRepo {
+	return &MyRepo{
+		conn: conn,
+	}
+}

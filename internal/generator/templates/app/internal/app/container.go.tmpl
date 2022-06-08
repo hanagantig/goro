@@ -1,0 +1,46 @@
+package app
+
+import (
+	"github.com/jmoiron/sqlx"
+    "database/sql"
+    "{{ .Module }}/internal/{{ .Module }}/usecase"
+    "{{ .Module }}/internal/adapter/repository"
+)
+
+type Container struct {
+	{{if .Databases}}
+		//goro:container databases
+		{{range .Databases -}} 
+    		{{.Name}} {{.Connection}} 
+		{{end -}}
+	{{end}}
+
+	deps    map[string]interface{}
+}
+
+func NewContainer({{if .Databases}}{{range .Databases -}}{{.Name}} {{.Connection}},{{end -}}{{end}}) *Container {
+	
+    return &Container{
+		{{if .Databases}}
+            
+            //goro:container databases
+            {{range .Databases -}} 
+                {{.Name}}: {{.Name}},
+            {{end -}}
+	    {{end}}
+		deps:    make(map[string]interface{}),
+	}
+}
+
+func (cnt *Container) GetUseCase() *usecase.UseCase {
+    return usecase.NewUseCase()
+}
+
+{{if .Dependencies}}
+    {{range $key, $val := .Dependencies}}
+        func (cnt *Container) Get{{$key}}() {{ $val.Type }} {
+            
+            return {{ $val.BuildFunc }} ({{range $p := $val.Deps}} cnt.{{$p}}, {{end}})
+        }
+    {{end}}
+{{end}}

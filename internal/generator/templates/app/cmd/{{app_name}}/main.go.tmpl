@@ -1,0 +1,27 @@
+package main
+
+import (
+	"flag"
+	"log"
+
+	"{{ .Module }}/internal/app"
+)
+
+// ldflags pass variables
+var (
+	commit      = "none"
+	version     = "dev"
+	serviceName = "{{ .Module }}"
+)
+
+func main() {
+	configPath := flag.String("config", "default", "config file path")
+	flag.Parse()
+
+	a, err := app.NewApp(*configPath)
+	if err != nil {
+		log.Fatal("Fail to create app: ", err)
+	}
+
+	a.Start()
+}

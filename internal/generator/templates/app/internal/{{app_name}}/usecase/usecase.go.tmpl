@@ -1,0 +1,15 @@
+package usecase
+
+import (
+	"context"
+)
+
+type UseCase struct {}
+
+func NewUseCase() *UseCase {
+	return &UseCase{}
+}
+
+func (uc *UseCase) Pong(ctx context.Context) (string, error) {
+	return "pong", nil
+}

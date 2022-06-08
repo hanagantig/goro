@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 )
 
@@ -37,12 +38,23 @@ func (g *generateCodeChain) Apply() error {
 
 			g.data.Databases = []entity.Database{
 				{
-					Type: "mysqlx",
-					Name: "mainDB",
+					Type:       "mysqlx",
+					Name:       "mainDB",
+					Connection: "*sqlx.DB",
 				},
 				{
-					Type: "mysql",
-					Name: "folbackDB",
+					Type:       "mysql",
+					Name:       "folbackDB",
+					Connection: "*sql.DB",
+				},
+			}
+
+			g.data.Dependencies = map[entity.DependencyName]entity.Dependency{
+				"myRepo": entity.Dependency{
+					Pkg:       "internal/adapter/repository",
+					BuildFunc: "repository.NewMyRepo",
+					Type:      "*repository.MyRepo",
+					Deps:      []entity.DependencyName{"mainDB"},
 				},
 			}
 			g.data.Module = g.data.Name
@@ -51,11 +63,14 @@ func (g *generateCodeChain) Apply() error {
 			if err != nil {
 				log.Fatalf("Unable to parse data into template: %v\n", err)
 			}
-			formatted, err := format.Source(buf.Bytes())
-			if err != nil {
-				log.Fatalf("Could not format processed template in file %s: %v\n", path, err)
+
+			formatted := buf.Bytes()
+			if strings.Contains(d.Name(), ".go") {
+				formatted, err = format.Source(buf.Bytes())
+				if err != nil {
+					log.Fatalf("Could not format processed template in file %s: %v\n", path, err)
+				}
 			}
-			_ = formatted
 
 			err = ioutil.WriteFile(path, formatted, 0644)
 			if err != nil {
