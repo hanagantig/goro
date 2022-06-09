@@ -4,14 +4,14 @@ import (
 	"flag"
 	"log"
 
-	"{{ .Module }}/internal/app"
+	"{{ .App.Module }}/internal/app"
 )
 
 // ldflags pass variables
 var (
 	commit      = "none"
 	version     = "dev"
-	serviceName = "{{ .Module }}"
+	serviceName = "{{ .App.Module }}"
 )
 
 func main() {

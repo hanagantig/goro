@@ -4,18 +4,28 @@ import (
 	"goro/internal/entity"
 	"goro/internal/generator"
 	"goro/internal/generator/chains"
+	"goro/internal/pkg/log"
 )
 
-func InitApp() {
-	appData := entity.AppData{}
-	err := appData.AskAndSetName()
+func InitApp(configPath string) {
+	appData, err := entity.LoadDataFromYaml(configPath)
 	if err != nil {
-		return
+		log.Fatal(err)
+	}
+
+	err = appData.AskAndSetName()
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	err = appData.AskAndSetWorkDir()
 	if err != nil {
-		return
+		log.Fatal(err)
+	}
+
+	err = appData.Validate()
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	g := generator.NewGenerator()
@@ -25,7 +35,7 @@ func InitApp() {
 	g.AddChain(chains.NewFitFileExtensionChain(appData))
 	g.AddChain(chains.NewGenerateCodeChain(appData))
 	g.AddChain(chains.NewModInitChain(appData))
-	g.AddChain(chains.NewModTidyChain(appData.WorkDir))
+	g.AddChain(chains.NewModTidyChain(appData.App.WorkDir))
 
 	err = g.Generate()
 	_ = err

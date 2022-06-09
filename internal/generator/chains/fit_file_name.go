@@ -20,7 +20,7 @@ func NewFitFileNameChain(data entity.AppData) *fitFileNameChain {
 }
 
 func (f *fitFileNameChain) Apply() error {
-	appName := strcase.ToKebab(f.data.Name)
+	appName := strcase.ToKebab(f.data.App.Name)
 	toRename := make([]string, 0, 0)
 	err := filepath.WalkDir("/Users/hanagantig/tmp/gorotest",
 		func(path string, d os.DirEntry, err error) error {

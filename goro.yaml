@@ -1,2 +1,21 @@
 app:
-  name: appName
+  name: pepe
+  module: pepe
+  work_dir: "/Users/hanagantig/tmp/gorotest"
+
+storages:
+  mysql:
+    type: mysql
+    connection: "*sql.DB"
+
+handlers:
+  - http
+  - grpc
+  - amqp
+
+dependencies:
+  useCase:
+    pkg: "internal/usecase"
+    type: "*usecase.UseCase"
+    build_func: "usecase.NewUseCase"
+    deps: []

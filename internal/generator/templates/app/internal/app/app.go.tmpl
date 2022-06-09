@@ -4,9 +4,8 @@ package app
 
 import (
 	"sync"
-	"github.com/jmoiron/sqlx"
     "database/sql"
-	"{{ .Module }}/internal/config"
+	"{{ .App.Module }}/internal/config"
 	"go.uber.org/zap/zapcore"
 )
 
@@ -29,11 +28,11 @@ type App struct {
 	//hc     health.Checker
 	//hcOnce *sync.Once
 
-	{{if .Databases}}
+	{{if .Storages}}
 		//goro:app databases
-		{{range .Databases -}} 
-    		{{.Name}} {{.Connection}} 
-		{{end -}}
+		{{range $key, $val := .Storages}}
+    		{{$key}} {{$val.Connection}}
+		{{end}}
 	{{end}}
 
 
@@ -58,14 +57,14 @@ func NewApp(configPath string) (*App, error) {
 	//goro:init healthChecker
 	//app.initHealthChecker()
 
-	{{if .Databases}}
+	{{if .Storages}}
 		//goro:init database
-		{{range .Databases -}} 
-			{{.Name}}, err := app.new{{.Type}}Connect(cfg.MainDB)
+		{{range $key, $val := .Storages}}
+			{{$key}}, err := app.new{{$val.Type}}Connect(cfg.MainDB)
 			if err != nil {
 				return nil, err
 			}
-			app.{{.Name}} = {{.Name}}
+			app.{{$key}} = {{$key}}
 
 		{{end}}
 	{{end}}	

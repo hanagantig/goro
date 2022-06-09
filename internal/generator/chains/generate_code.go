@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"go/format"
 	entity "goro/internal/entity"
+	"goro/internal/pkg/util"
 	"io/ioutil"
 	"log"
 	"os"
@@ -29,35 +30,17 @@ func (g *generateCodeChain) Apply() error {
 				return nil
 			}
 
-			if d.Name() == ".DS_Store" {
+			if d.Name() == ".DS_Store" || strings.Contains(path, ".idea") {
 				return nil
 			}
 
+			fMap := template.FuncMap{
+				"camelize": util.Camelize,
+			}
+
 			buf := bytes.NewBuffer(nil)
-			tmpl := template.Must(template.ParseFiles(path))
-
-			g.data.Databases = []entity.Database{
-				{
-					Type:       "mysqlx",
-					Name:       "mainDB",
-					Connection: "*sqlx.DB",
-				},
-				{
-					Type:       "mysql",
-					Name:       "folbackDB",
-					Connection: "*sql.DB",
-				},
-			}
-
-			g.data.Dependencies = map[entity.DependencyName]entity.Dependency{
-				"myRepo": entity.Dependency{
-					Pkg:       "internal/adapter/repository",
-					BuildFunc: "repository.NewMyRepo",
-					Type:      "*repository.MyRepo",
-					Deps:      []entity.DependencyName{"mainDB"},
-				},
-			}
-			g.data.Module = g.data.Name
+			t := template.New(d.Name()).Funcs(fMap)
+			tmpl := template.Must(t.ParseFiles(path))
 
 			err = tmpl.Execute(buf, g.data)
 			if err != nil {

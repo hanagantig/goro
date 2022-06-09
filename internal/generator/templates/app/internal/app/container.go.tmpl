@@ -3,42 +3,38 @@ package app
 import (
 	"github.com/jmoiron/sqlx"
     "database/sql"
-    "{{ .Module }}/internal/{{ .Module }}/usecase"
-    "{{ .Module }}/internal/adapter/repository"
+    "{{ .App.Module }}/internal/{{ .App.Module }}/usecase"
+    "{{ .App.Module }}/internal/adapter/repository"
 )
 
 type Container struct {
-	{{if .Databases}}
+	{{if .Storages}}
 		//goro:container databases
-		{{range .Databases -}} 
-    		{{.Name}} {{.Connection}} 
+		{{range $key, $val := .Storages}}
+    		{{$key}} {{$val.Connection}}
 		{{end -}}
 	{{end}}
 
 	deps    map[string]interface{}
 }
 
-func NewContainer({{if .Databases}}{{range .Databases -}}{{.Name}} {{.Connection}},{{end -}}{{end}}) *Container {
+func NewContainer({{if .Storages}}{{range $key, $val := .Storages}}{{$key}} {{$val.Connection}},{{end -}}{{end}}) *Container {
 	
     return &Container{
-		{{if .Databases}}
+		{{if .Storages}}
             
             //goro:container databases
-            {{range .Databases -}} 
-                {{.Name}}: {{.Name}},
+            {{range $key, $val := .Storages}}
+                {{$key}}: {{$key}},
             {{end -}}
 	    {{end}}
 		deps:    make(map[string]interface{}),
 	}
 }
 
-func (cnt *Container) GetUseCase() *usecase.UseCase {
-    return usecase.NewUseCase()
-}
-
 {{if .Dependencies}}
     {{range $key, $val := .Dependencies}}
-        func (cnt *Container) Get{{$key}}() {{ $val.Type }} {
+        func (cnt *Container) Get{{camelize $key.String }}() {{ $val.Type }} {
             
             return {{ $val.BuildFunc }} ({{range $p := $val.Deps}} cnt.{{$p}}, {{end}})
         }

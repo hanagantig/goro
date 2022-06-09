@@ -1,7 +1,7 @@
 package app
 
 import (
-	"{{ .Module }}/internal/config"
+	"{{ .App.Module }}/internal/config"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-{{range .Databases -}}
+{{range .Storages -}}
     func (app *App) new{{.Type}}Connect(cfg config.MySQLConfig) ({{if eq .Type `mysqlx`}}*sqlx.DB{{end}}{{if eq .Type `mysql`}}*sql.DB{{end}}, error) {
 
     	builder := strings.Builder{}

@@ -17,8 +17,8 @@ func NewModInitChain(data entity.AppData) *modInitChain {
 }
 
 func (m *modInitChain) Apply() error {
-	cmd := exec.Command("go", "mod", "init", m.data.Name)
-	cmd.Dir = m.data.WorkDir
+	cmd := exec.Command("go", "mod", "init", m.data.App.Name)
+	cmd.Dir = m.data.App.WorkDir
 
 	output, err := cmd.CombinedOutput()
 
