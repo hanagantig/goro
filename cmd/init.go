@@ -5,6 +5,8 @@ import (
 	"goro/internal/commands"
 )
 
+var goroCnf string
+
 // initCmd represents the init command
 var initCmd = &cobra.Command{
 	Use:   "init",
@@ -16,11 +18,13 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		commands.InitApp("/Users/hanagantig/projects/goro/goro.yaml")
+		commands.InitApp(goroCnf)
 	},
 }
 
 func init() {
+	rootCmd.PersistentFlags().StringVar(&goroCnf, "config", "", "path to goro yaml file")
+
 	rootCmd.AddCommand(initCmd)
 
 	// Here you will define your flags and configuration settings.

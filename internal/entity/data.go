@@ -52,6 +52,14 @@ func (s *Storage) GetPackage() string {
 	return storagePackages[s.Type]
 }
 
+func NewAppData(pathToFile string) (AppData, error) {
+	if pathToFile == "" {
+		return AppData{}, nil
+	}
+
+	return LoadDataFromYaml(pathToFile)
+}
+
 func LoadDataFromYaml(pathToFile string) (AppData, error) {
 	var data AppData
 

@@ -8,7 +8,7 @@ import (
 )
 
 func InitApp(configPath string) {
-	appData, err := entity.LoadDataFromYaml(configPath)
+	appData, err := entity.NewAppData(configPath)
 	if err != nil {
 		log.Fatal(err)
 	}
