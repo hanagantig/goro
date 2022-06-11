@@ -60,7 +60,7 @@ func NewApp(configPath string) (*App, error) {
 	{{if .Storages}}
 		//goro:init database
 		{{range $key, $val := .Storages}}
-			{{$key}}, err := app.new{{$val.Type}}Connect(cfg.MainDB)
+			{{$key}}, err := app.new{{toCamelCase $val.Type}}Connect(cfg.MainDB)
 			if err != nil {
 				return nil, err
 			}
@@ -70,10 +70,7 @@ func NewApp(configPath string) (*App, error) {
 	{{end}}	
 
 	//goro:init dependencies
-	//app.c, err := app.initContainer()
-	//if err != nil {
-	//	return nil, err
-	//}
+	app.c = NewContainer({{if .Storages}}{{range $key, $val := .Storages}}app.{{$key}},{{end -}}{{end}})
 
 	return app, nil
 }

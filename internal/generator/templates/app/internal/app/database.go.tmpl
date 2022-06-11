@@ -4,8 +4,12 @@ import (
 	"{{ .App.Module }}/internal/config"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx"
-    "database/sql"
+	{{if .Storages}}
+        {{range .Storages -}}
+            {{if eq .Type `mysqlx`}}"github.com/jmoiron/sqlx"{{end}}
+            {{if eq .Type `mysql`}}"database/sql"{{end}}
+        {{end -}}
+    {{end}}
 	"go.uber.org/zap"
 	"net/url"
 	"strconv"
@@ -13,7 +17,7 @@ import (
 )
 
 {{range .Storages -}}
-    func (app *App) new{{.Type}}Connect(cfg config.MySQLConfig) ({{if eq .Type `mysqlx`}}*sqlx.DB{{end}}{{if eq .Type `mysql`}}*sql.DB{{end}}, error) {
+    func (app *App) new{{toCamelCase .Type}}Connect(cfg config.MySQLConfig) ({{if eq .Type `mysqlx`}}*sqlx.DB{{end}}{{if eq .Type `mysql`}}*sql.DB{{end}}, error) {
 
     	builder := strings.Builder{}
     	builder.WriteString(cfg.User)

@@ -1,10 +1,18 @@
 package app
 
 import (
-	"github.com/jmoiron/sqlx"
-    "database/sql"
-    "{{ .App.Module }}/internal/{{ .App.Module }}/usecase"
-    "{{ .App.Module }}/internal/adapter/repository"
+    {{if .Storages}}
+        {{range .Storages -}}
+            {{if eq .Type `mysqlx`}}"github.com/jmoiron/sqlx"{{end}}
+            {{if eq .Type `mysql`}}"database/sql"{{end}}
+        {{end -}}
+    {{end}}
+
+    {{if .Dependencies}}
+        {{range .Dependencies -}}
+            "{{ $.App.Module }}/{{.Pkg}}"
+        {{end -}}
+    {{end}}
 )
 
 type Container struct {
@@ -34,7 +42,7 @@ func NewContainer({{if .Storages}}{{range $key, $val := .Storages}}{{$key}} {{$v
 
 {{if .Dependencies}}
     {{range $key, $val := .Dependencies}}
-        func (cnt *Container) Get{{camelize $key.String }}() {{ $val.Type }} {
+        func (cnt *Container) Get{{toCamelCase $key.String }}() {{ $val.Type }} {
             
             return {{ $val.BuildFunc }} ({{range $p := $val.Deps}} cnt.{{$p}}, {{end}})
         }

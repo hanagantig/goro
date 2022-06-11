@@ -2,9 +2,9 @@ package chains
 
 import (
 	"bytes"
+	"github.com/iancoleman/strcase"
 	"go/format"
 	entity "goro/internal/entity"
-	"goro/internal/pkg/util"
 	"io/ioutil"
 	"log"
 	"os"
@@ -35,7 +35,7 @@ func (g *generateCodeChain) Apply() error {
 			}
 
 			fMap := template.FuncMap{
-				"camelize": util.Camelize,
+				"toCamelCase": strcase.ToCamel,
 			}
 
 			buf := bytes.NewBuffer(nil)

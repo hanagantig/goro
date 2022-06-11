@@ -8,6 +8,11 @@ import (
 	"os"
 )
 
+var storagePackages = map[string]string{
+	"mysql":  "\"database/sql\"",
+	"mysqlx": "\"github.com/jmoiron/sqlx\"",
+}
+
 type DependencyName string
 type StorageName string
 
@@ -41,6 +46,10 @@ type Dependency struct {
 	Type      string   `yaml:"type"`
 	BuildFunc string   `yaml:"build_func"`
 	Deps      []string `yaml:"deps"`
+}
+
+func (s *Storage) GetPackage() string {
+	return storagePackages[s.Type]
 }
 
 func LoadDataFromYaml(pathToFile string) (AppData, error) {

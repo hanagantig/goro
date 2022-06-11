@@ -15,7 +15,7 @@ handlers:
 
 dependencies:
   useCase:
-    pkg: "internal/usecase"
+    pkg: "internal/pepe/usecase"
     type: "*usecase.UseCase"
     build_func: "usecase.NewUseCase"
     deps: []
