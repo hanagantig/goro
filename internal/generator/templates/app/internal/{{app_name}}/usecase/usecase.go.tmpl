@@ -4,12 +4,20 @@ import (
 	"context"
 )
 
-type UseCase struct {}
+type PongService interface {
+    GetPingAnswer() string
+}
 
-func NewUseCase() *UseCase {
-	return &UseCase{}
+type UseCase struct {
+    pongService PongService
+}
+
+func NewUseCase(ps PongService) *UseCase {
+	return &UseCase{
+	    pongService: ps,
+	}
 }
 
 func (uc *UseCase) Pong(ctx context.Context) (string, error) {
-	return "pong", nil
+	return uc.pongService.GetPingAnswer(), nil
 }

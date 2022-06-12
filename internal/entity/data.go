@@ -26,8 +26,16 @@ func (s DependencyName) String() string {
 
 type AppData struct {
 	App          App                           `yaml:"app"`
+	UseCase      UseCase                       `yaml:"use_case"`
 	Storages     map[StorageName]Storage       `yaml:"storages"`
 	Dependencies map[DependencyName]Dependency `yaml:"dependencies"`
+}
+
+type UseCase struct {
+	Pkg       string   `yaml:"pkg"`
+	Type      string   `yaml:"type"`
+	BuildFunc string   `yaml:"build_func"`
+	Deps      []string `yaml:"deps"`
 }
 
 type App struct {

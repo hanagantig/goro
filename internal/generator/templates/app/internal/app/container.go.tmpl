@@ -8,6 +8,8 @@ import (
         {{end -}}
     {{end}}
 
+    "{{ $.App.Module }}/{{$.UseCase.Pkg}}"
+
     {{if .Dependencies}}
         {{range .Dependencies -}}
             "{{ $.App.Module }}/{{.Pkg}}"
@@ -40,11 +42,25 @@ func NewContainer({{if .Storages}}{{range $key, $val := .Storages}}{{$key}} {{$v
 	}
 }
 
+func (c *Container) GetUseCase() {{ $.UseCase.Type }} {
+
+    return {{ $.UseCase.BuildFunc }}({{range $p := $.UseCase.Deps}} c.get{{toCamelCase $p}}(), {{end}})
+}
+
+{{if .Storages}}
+    {{range $key, $val := .Storages}}
+        func (c *Container) get{{toCamelCase $key.String }}() {{ $val.Connection }} {
+
+            return c.{{$key.String}}
+        }
+    {{end}}
+{{end}}
+
 {{if .Dependencies}}
     {{range $key, $val := .Dependencies}}
-        func (cnt *Container) Get{{toCamelCase $key.String }}() {{ $val.Type }} {
+        func (c *Container) get{{toCamelCase $key.String }}() {{ $val.Type }} {
             
-            return {{ $val.BuildFunc }} ({{range $p := $val.Deps}} cnt.{{$p}}, {{end}})
+            return {{ $val.BuildFunc }} ({{range $p := $val.Deps}} c.get{{toCamelCase $p}}(), {{end}})
         }
     {{end}}
 {{end}}

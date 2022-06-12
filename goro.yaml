@@ -4,9 +4,15 @@ app:
   work_dir: "/Users/hanagantig/tmp/gorotest"
 
 storages:
-  mysql:
-    type: mysql
-    connection: "*sql.DB"
+  mysqlx:
+    type: mysqlx
+    connection: "*sqlx.DB"
+
+use_case:
+  pkg: "internal/pepe/usecase"
+  type: "*usecase.UseCase"
+  build_func: "usecase.NewUseCase"
+  deps: [myService]
 
 handlers:
   - http
@@ -14,8 +20,14 @@ handlers:
   - amqp
 
 dependencies:
-  useCase:
-    pkg: "internal/pepe/usecase"
-    type: "*usecase.UseCase"
-    build_func: "usecase.NewUseCase"
-    deps: []
+  myRepo:
+    pkg: "internal/adapter/repository"
+    type: "*repository.MyRepo"
+    build_func: "repository.NewMyRepo"
+    deps: [mysqlx]
+
+  myService:
+    pkg: "internal/service/pongservice"
+    type: "*pongservice.MyService"
+    build_func: "pongservice.NewMyService"
+    deps: [ myRepo ]

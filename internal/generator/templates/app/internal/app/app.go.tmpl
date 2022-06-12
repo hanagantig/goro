@@ -4,7 +4,12 @@ package app
 
 import (
 	"sync"
-    "database/sql"
+    {{if .Storages}}
+        {{range .Storages -}}
+            {{if eq .Type `mysqlx`}}"github.com/jmoiron/sqlx"{{end}}
+            {{if eq .Type `mysql`}}"database/sql"{{end}}
+        {{end -}}
+    {{end}}
 	"{{ .App.Module }}/internal/config"
 	"go.uber.org/zap/zapcore"
 )

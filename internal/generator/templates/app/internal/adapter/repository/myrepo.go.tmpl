@@ -13,3 +13,7 @@ func NewMyRepo(conn *sqlx.DB) *MyRepo {
 		conn: conn,
 	}
 }
+
+func (m *MyRepo) GetPong() string {
+    return "pong"
+}
