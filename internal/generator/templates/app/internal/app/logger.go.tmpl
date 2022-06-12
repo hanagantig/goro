@@ -6,11 +6,11 @@ import (
 	"{{ .App.Module }}/pkg/logger"
 )
 
-func (app *App) initLogger() {
+func (a *App) initLogger() {
 	l, err := logger.NewLogger()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	app.logger = l
+	a.logger = l
 }

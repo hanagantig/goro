@@ -17,7 +17,7 @@ import (
 )
 
 {{range .Storages -}}
-    func (app *App) new{{toCamelCase .Type}}Connect(cfg config.MySQLConfig) ({{if eq .Type `mysqlx`}}*sqlx.DB{{end}}{{if eq .Type `mysql`}}*sql.DB{{end}}, error) {
+    func (a *App) new{{toCamelCase .Type}}Connect(cfg config.MySQLConfig) ({{if eq .Type `mysqlx`}}*sqlx.DB{{end}}{{if eq .Type `mysql`}}*sql.DB{{end}}, error) {
 
     	builder := strings.Builder{}
     	builder.WriteString(cfg.User)
@@ -55,7 +55,7 @@ import (
 
         db, err := {{if eq .Type `mysqlx`}}sqlx{{end}}{{if eq .Type `mysql`}}sql{{end}}.Open("mysql", dsn)
         if err != nil {
-            app.logger.Fatal("Failed to init mysql", zap.Error(err))
+            a.logger.Fatal("Failed to init mysql", zap.Error(err))
         }
 
         db.SetConnMaxLifetime(cfg.ConnMaxLifetime)

@@ -8,39 +8,39 @@ import (
 	"go.uber.org/zap"
 )
 
-func (app *App) Start() {
+func (a *App) Start() {
 	go func() {
-		app.StartHttpServer()
+		a.StartHttpServer()
 	}()
 
 	err := gracy.Wait()
 	if err != nil {
-		app.logger.Error("failed to gracefully shutdown server", zap.Error(err))
+		a.logger.Error("failed to gracefully shutdown server", zap.Error(err))
 	}
-	app.logger.Info("server gracefully stopped")
+	a.logger.Info("server gracefully stopped")
 }
 
-func (app *App) StartHttpServer() {
-	handler := v1.NewHandler(app.c.GetUseCase(), app.logger)
+func (a *App) StartHttpServer() {
+	handler := v1.NewHandler(a.c.GetUseCase(), a.logger)
 
 	router := http.NewRouter()
 	router.
 		//WithMetrics().
 		//WithHealthChecks(app.hc).
 		WithSwagger().
-		WithHandler(handler, app.logger).
+		WithHandler(handler, a.logger).
 		WithProfiler()
 
-	srv := http.NewServer(app.cfg.HTTP)
+	srv := http.NewServer(a.cfg.HTTP)
 	srv.RegisterRoutes(router)
 
 	gracy.AddCallback(func() error {
 		return srv.Stop()
 	})
 
-	app.logger.Info(fmt.Sprintf("starting HTTP server at %s:%s", app.cfg.HTTP.Host, app.cfg.HTTP.Port))
+	a.logger.Info(fmt.Sprintf("starting HTTP server at %s:%s", a.cfg.HTTP.Host, a.cfg.HTTP.Port))
 	err := srv.Start()
 	if err != nil {
-		app.logger.Fatal("Fail to start %s http server:", zap.String("app",app.cfg.App.Name), zap.Error(err))
+		a.logger.Fatal("Fail to start %s http server:", zap.String("app",a.cfg.App.Name), zap.Error(err))
 	}
 }
