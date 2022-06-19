@@ -3,34 +3,32 @@ package chains
 import (
 	"bytes"
 	"github.com/iancoleman/strcase"
+	"github.com/spf13/afero"
 	"go/format"
-	entity "goro/internal/entity"
-	"io/ioutil"
-	"log"
+	entity "goro/internal/config"
 	"os"
-	"path/filepath"
 	"strings"
 	"text/template"
 )
 
 type generateCodeChain struct {
-	data entity.AppData
+	data entity.Config
 }
 
-func NewGenerateCodeChain(data entity.AppData) *generateCodeChain {
+func NewGenerateCodeChain(data entity.Config) *generateCodeChain {
 	return &generateCodeChain{
 		data: data,
 	}
 }
 
-func (g *generateCodeChain) Apply() error {
-	err := filepath.WalkDir("/Users/hanagantig/tmp/gorotest",
-		func(path string, d os.DirEntry, err error) error {
-			if d.IsDir() {
+func (g *generateCodeChain) Apply(fs *afero.Afero) (*afero.Afero, error) {
+	err := fs.Walk(g.data.App.WorkDir,
+		func(path string, f os.FileInfo, err error) error {
+			if f.IsDir() {
 				return nil
 			}
 
-			if d.Name() == ".DS_Store" || strings.Contains(path, ".idea") {
+			if f.Name() == ".DS_Store" || strings.Contains(path, ".idea") {
 				return nil
 			}
 
@@ -39,23 +37,23 @@ func (g *generateCodeChain) Apply() error {
 			}
 
 			buf := bytes.NewBuffer(nil)
-			t := template.New(d.Name()).Funcs(fMap)
+			t := template.New(f.Name()).Funcs(fMap)
 			tmpl := template.Must(t.ParseFiles(path))
 
 			err = tmpl.Execute(buf, g.data)
 			if err != nil {
-				log.Fatalf("Unable to parse data into template: %v\n", err)
+				return err
 			}
 
 			formatted := buf.Bytes()
-			if strings.Contains(d.Name(), ".go") {
+			if strings.Contains(f.Name(), ".go") {
 				formatted, err = format.Source(buf.Bytes())
 				if err != nil {
-					log.Fatalf("Could not format processed template in file %s: %v\n", path, err)
+					return err
 				}
 			}
 
-			err = ioutil.WriteFile(path, formatted, 0644)
+			err = fs.WriteFile(path, formatted, 0644)
 			if err != nil {
 				return err
 			}
@@ -64,7 +62,7 @@ func (g *generateCodeChain) Apply() error {
 		},
 	)
 
-	return err
+	return fs, err
 }
 
 func (g *generateCodeChain) Name() string {

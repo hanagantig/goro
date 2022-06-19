@@ -1,4 +1,4 @@
-package entity
+package config
 
 import (
 	"fmt"
@@ -15,6 +15,7 @@ var storagePackages = map[string]string{
 
 type DependencyName string
 type StorageName string
+type StorageList map[StorageName]Storage
 
 func (s StorageName) String() string {
 	return string(s)
@@ -24,10 +25,10 @@ func (s DependencyName) String() string {
 	return string(s)
 }
 
-type AppData struct {
+type Config struct {
 	App          App                           `yaml:"app"`
 	UseCase      UseCase                       `yaml:"use_case"`
-	Storages     map[StorageName]Storage       `yaml:"storages"`
+	Storages     StorageList                   `yaml:"storages"`
 	Dependencies map[DependencyName]Dependency `yaml:"dependencies"`
 }
 
@@ -60,16 +61,16 @@ func (s *Storage) GetPackage() string {
 	return storagePackages[s.Type]
 }
 
-func NewAppData(pathToFile string) (AppData, error) {
+func NewConfig(pathToFile string) (Config, error) {
 	if pathToFile == "" {
-		return AppData{}, nil
+		return Config{}, nil
 	}
 
 	return LoadDataFromYaml(pathToFile)
 }
 
-func LoadDataFromYaml(pathToFile string) (AppData, error) {
-	var data AppData
+func LoadDataFromYaml(pathToFile string) (Config, error) {
+	var data Config
 
 	_, err := os.Stat(pathToFile)
 	if err != nil {
@@ -83,7 +84,7 @@ func LoadDataFromYaml(pathToFile string) (AppData, error) {
 	return data, err
 }
 
-func (d *AppData) Validate() error {
+func (d *Config) Validate() error {
 	if d.App.Module == "" || d.App.Name == "" || d.App.WorkDir == "" {
 		return fmt.Errorf("module, name and work_dir can't be empty")
 	}
@@ -108,7 +109,7 @@ func (d *AppData) Validate() error {
 	return nil
 }
 
-func (d *AppData) AskAndSetName() error {
+func (d *Config) AskAndSetName() error {
 	if d.App.Name != "" {
 		return nil
 	}
@@ -122,19 +123,19 @@ func (d *AppData) AskAndSetName() error {
 	return nil
 }
 
-func (d *AppData) askName() (string, error) {
+func (d *Config) askName() (string, error) {
 	return (&promptui.Prompt{
 		Label: "Enter an app name",
 		Validate: func(s string) error {
 			if s == "" {
-				return fmt.Errorf("entity name can't be empty")
+				return fmt.Errorf("config name can't be empty")
 			}
 			return nil
 		},
 	}).Run()
 }
 
-func (d *AppData) AskAndSetWorkDir() error {
+func (d *Config) AskAndSetWorkDir() error {
 	if d.App.WorkDir != "" {
 		return nil
 	}
@@ -154,7 +155,7 @@ func (d *AppData) AskAndSetWorkDir() error {
 	return nil
 }
 
-func (d *AppData) askWorkDir() (string, error) {
+func (d *Config) askWorkDir() (string, error) {
 	return (&promptui.Prompt{
 		Label: "Enter an app work dir or leave it empty to use current directory",
 		// TODO: validate path

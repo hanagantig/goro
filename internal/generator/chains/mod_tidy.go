@@ -2,6 +2,7 @@ package chains
 
 import (
 	"errors"
+	"github.com/spf13/afero"
 	"os/exec"
 )
 
@@ -15,23 +16,23 @@ func NewModTidyChain(workDir string) *modTidyChain {
 	}
 }
 
-func (m *modTidyChain) Apply() error {
+func (m *modTidyChain) Apply(fs *afero.Afero) (*afero.Afero, error) {
 	cmd := exec.Command("go", "mod", "tidy")
 	cmd.Dir = m.workDir
 
 	output, err := cmd.CombinedOutput()
 	out := string(output)
 	if err != nil && out != "" {
-		return errors.New(out)
+		return fs, errors.New(out)
 	}
 
-	return nil
+	return fs, nil
 }
 
-func (g *modTidyChain) Name() string {
+func (m *modTidyChain) Name() string {
 	return "Go mod tidy"
 }
 
-func (g *modTidyChain) Rollback() error {
+func (m *modTidyChain) Rollback() error {
 	return nil
 }

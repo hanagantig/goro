@@ -1,55 +1,52 @@
 package chains
 
 import (
-	"fmt"
 	"github.com/iancoleman/strcase"
-	entity "goro/internal/entity"
+	"github.com/spf13/afero"
+	entity "goro/internal/config"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
 type fitFileNameChain struct {
-	data entity.AppData
+	data entity.Config
 }
 
-func NewFitFileNameChain(data entity.AppData) *fitFileNameChain {
+func NewFitFileNameChain(data entity.Config) *fitFileNameChain {
 	return &fitFileNameChain{
 		data: data,
 	}
 }
 
-func (f *fitFileNameChain) Apply() error {
+func (f *fitFileNameChain) Apply(fs *afero.Afero) (*afero.Afero, error) {
 	appName := strcase.ToKebab(f.data.App.Name)
 	toRename := make([]string, 0, 0)
-	err := filepath.WalkDir("/Users/hanagantig/tmp/gorotest",
-		func(path string, d os.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-			if !d.IsDir() {
-				return nil
-			}
 
-			if strings.Contains(d.Name(), "{{app_name}}") {
-				if _, err = os.Stat(path); !os.IsNotExist(err) {
-					toRename = append(toRename, path)
-				}
-			}
-
-			return nil
-		},
-	)
-
-	for _, p := range toRename {
-		err = os.Rename(p, strings.Replace(p, "{{app_name}}", appName, 1))
-		fmt.Println(err)
+	err := fs.Walk("templates/app", func(path string, f os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
+		if !f.IsDir() {
+			return nil
+		}
+
+		if strings.Contains(f.Name(), "{{app_name}}") {
+			if _, err = fs.Stat(path); !os.IsNotExist(err) {
+				toRename = append(toRename, path)
+			}
+		}
+
+		return nil
+	})
+
+	for _, p := range toRename {
+		err = fs.Rename(p, strings.Replace(p, "{{app_name}}", appName, 1))
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return err
+	return fs, err
 }
 
 func (f *fitFileNameChain) Name() string {

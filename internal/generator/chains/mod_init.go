@@ -2,21 +2,22 @@ package chains
 
 import (
 	"errors"
-	entity "goro/internal/entity"
+	"github.com/spf13/afero"
+	entity "goro/internal/config"
 	"os/exec"
 )
 
 type modInitChain struct {
-	data entity.AppData
+	data entity.Config
 }
 
-func NewModInitChain(data entity.AppData) *modInitChain {
+func NewModInitChain(data entity.Config) *modInitChain {
 	return &modInitChain{
 		data: data,
 	}
 }
 
-func (m *modInitChain) Apply() error {
+func (m *modInitChain) Apply(fs *afero.Afero) (*afero.Afero, error) {
 	cmd := exec.Command("go", "mod", "init", m.data.App.Name)
 	cmd.Dir = m.data.App.WorkDir
 
@@ -24,10 +25,10 @@ func (m *modInitChain) Apply() error {
 
 	out := string(output)
 	if err != nil && out != "" {
-		return errors.New(out)
+		return fs, errors.New(out)
 	}
 
-	return nil
+	return fs, nil
 }
 
 func (g *modInitChain) Name() string {
