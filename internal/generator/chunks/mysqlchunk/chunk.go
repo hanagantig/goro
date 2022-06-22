@@ -12,28 +12,28 @@ const initName = "mysqlConn"
 const initType = "*sql.DB"
 const initHasErr = true
 
-type MysqlChunck struct{}
+type MysqlChunk struct{}
 
-func (m *MysqlChunck) GetName() string {
+func (m *MysqlChunk) GetName() string {
 	return name
 }
 
-func (m *MysqlChunck) GetDefinitionImports() string {
+func (m *MysqlChunk) GetDefinitionImports() string {
 	return "imports"
 }
 
-func (m *MysqlChunck) GetInit() string {
+func (m *MysqlChunk) GetInit() string {
 	return initName
 }
 
-func (m *MysqlChunck) GetBuild() string {
+func (m *MysqlChunk) GetBuild() string {
 	return buildTmpl
 }
 
-func (m *MysqlChunck) GetConfig() string {
+func (m *MysqlChunk) GetConfig() string {
 	return ""
 }
 
-func NewMySQLChunk() *MysqlChunck {
-	return &MysqlChunck{}
+func NewMySQLChunk() *MysqlChunk {
+	return &MysqlChunk{}
 }

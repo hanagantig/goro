@@ -1,7 +1,6 @@
 package generator
 
 import (
-	"embed"
 	"fmt"
 	"github.com/spf13/afero"
 	entity "goro/internal/config"
@@ -9,9 +8,6 @@ import (
 	"os"
 	"sync"
 )
-
-//go:embed templates/app
-var appTmplFs embed.FS
 
 type Chain interface {
 	Name() string
@@ -23,18 +19,14 @@ type Generator struct {
 	mu       sync.RWMutex
 	config   entity.Config
 	chains   []Chain
-	skeleton embed.FS
+	skeleton skeleton
 }
 
 func NewGenerator() *Generator {
 	return &Generator{
 		chains:   make([]Chain, 0),
-		skeleton: appTmplFs,
+		skeleton: singleServiceSkeleton,
 	}
-}
-
-func (g *Generator) GetAppTemplate() embed.FS {
-	return appTmplFs
 }
 
 func (g *Generator) AddChain(ch Chain) {
@@ -48,22 +40,27 @@ func (g *Generator) getTemplateFS() (*afero.Afero, error) {
 	mfs := afero.NewMemMapFs()
 	afs := &afero.Afero{Fs: mfs}
 
-	err := fs.WalkDir(g.skeleton, "templates/app",
+	err := fs.WalkDir(g.skeleton.template, g.skeleton.root,
 		func(path string, d fs.DirEntry, err error) error {
+			savePath := path[len(g.skeleton.root):]
+			if savePath == "" {
+				return nil
+			}
+
 			if d.IsDir() {
-				err = afs.MkdirAll(path, os.FileMode(0775))
+				err = afs.MkdirAll(savePath, os.FileMode(0775))
 				if err != nil {
 					return err
 				}
 				return nil
 			}
 
-			content, err := g.skeleton.ReadFile(path)
+			content, err := g.skeleton.template.ReadFile(savePath)
 			if err != nil {
 				return err
 			}
 
-			err = afs.WriteFile(path, content, os.FileMode(0775))
+			err = afs.WriteFile(savePath, content, os.FileMode(0775))
 			if err != nil {
 				return err
 			}
