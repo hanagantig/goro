@@ -8,21 +8,17 @@ import (
 	"strings"
 )
 
-type fitFileNameChain struct {
-	data entity.Config
+type fitFileNameChain struct{}
+
+func NewFitFileNameChain() *fitFileNameChain {
+	return &fitFileNameChain{}
 }
 
-func NewFitFileNameChain(data entity.Config) *fitFileNameChain {
-	return &fitFileNameChain{
-		data: data,
-	}
-}
-
-func (f *fitFileNameChain) Apply(fs *afero.Afero) (*afero.Afero, error) {
-	appName := strcase.ToKebab(f.data.App.Name)
+func (f *fitFileNameChain) Apply(fs *afero.Afero, data entity.Config) (*afero.Afero, error) {
+	appName := strcase.ToKebab(data.App.Name)
 	toRename := make([]string, 0, 0)
 
-	err := fs.Walk("templates/app", func(path string, f os.FileInfo, err error) error {
+	err := fs.Walk("/", func(path string, f os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -44,6 +40,7 @@ func (f *fitFileNameChain) Apply(fs *afero.Afero) (*afero.Afero, error) {
 		if err != nil {
 			return nil, err
 		}
+		fs.RemoveAll(p)
 	}
 
 	return fs, err

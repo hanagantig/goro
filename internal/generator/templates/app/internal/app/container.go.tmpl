@@ -1,12 +1,7 @@
 package app
 
 import (
-    {{if .Storages}}
-        {{range .Storages -}}
-            {{if eq .Type `mysqlx`}}"github.com/jmoiron/sqlx"{{end}}
-            {{if eq .Type `mysql`}}"database/sql"{{end}}
-        {{end -}}
-    {{end}}
+    {{ renderImports "storage" .Chunks }}
 
     "{{ $.App.Module }}/{{$.UseCase.Pkg}}"
 
@@ -15,34 +10,19 @@ import (
             "{{ $.App.Module }}/{{.Pkg}}"
         {{end -}}
     {{end}}
-
-    "sync"
 )
 
 type Container struct {
-	{{if .Storages}}
-		//goro:container databases
-		{{range $key, $val := .Storages}}
-    		{{$key}} {{$val.Connection}}
-		{{end -}}
-	{{end}}
+	{{ renderDefinition "storage" .Chunks }}
 
 	deps    map[string]interface{}
-	mu      *sync.RWMutex
 }
 
-func NewContainer({{if .Storages}}{{range $key, $val := .Storages}}{{$key}} {{$val.Connection}},{{end -}}{{end}}) *Container {
+func NewContainer({{ renderArgs "storage" .Chunks }}) *Container {
 	
     return &Container{
-		{{if .Storages}}
-            
-            //goro:container databases
-            {{range $key, $val := .Storages}}
-                {{$key}}: {{$key}},
-            {{end -}}
-	    {{end}}
+		{{ renderStructPopulation "storage" .Chunks }}
 		deps:    make(map[string]interface{}),
-		mu:      &sync.RWMutex{},
 	}
 }
 
@@ -51,25 +31,12 @@ func (c *Container) GetUseCase() {{ $.UseCase.Type }} {
     return {{ $.UseCase.BuildFunc }}({{range $p := $.UseCase.Deps}} c.get{{toCamelCase $p}}(), {{end}})
 }
 
-func (c *Container) getDep(name string) interface{} {
-    c.mu.RLock()
-    defer c.mu.RUnlock()
+{{ renderDependency "storage" "dependency" .Chunks }}
 
-    return c.deps[name]
-}
-
-func (c *Container) setDep(name string, val interface{}) {
-    c.mu.Lock()
-    defer c.mu.Unlock()
-
-    c.deps[name] = val
-}
-
-{{if .Storages}}
-    {{range $key, $val := .Storages}}
-        func (c *Container) get{{toCamelCase $key.String }}() {{ $val.Connection }} {
-
-            return c.{{$key.String}}
+{{range .Chunks}}
+    {{if eq .Scope `storage`}}
+        func (c *Container) get{{toCamelCase .Name}}() {{.ReturnType}} {
+            return c.{{.Name}}
         }
     {{end}}
 {{end}}
@@ -77,16 +44,8 @@ func (c *Container) setDep(name string, val interface{}) {
 {{if .Dependencies}}
     {{range $key, $val := .Dependencies}}
         func (c *Container) get{{toCamelCase $key.String }}() {{ $val.Type }} {
-            dep := c.getDep("{{toCamelCase $key.String }}")
-            res, ok := dep.({{$val.Type}})
-            if ok && res != nil {
-                return res
-            }
-
-            d := {{ $val.BuildFunc }} ({{range $p := $val.Deps}} c.get{{toCamelCase $p}}(), {{end}})
-            c.setDep("{{toCamelCase $key.String }}", d)
-
-            return d
+            
+            return {{ $val.BuildFunc }} ({{range $p := $val.Deps}} c.get{{toCamelCase $p}}(), {{end}})
         }
     {{end}}
 {{end}}

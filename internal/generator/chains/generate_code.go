@@ -6,24 +6,25 @@ import (
 	"github.com/spf13/afero"
 	"go/format"
 	entity "goro/internal/config"
+	"goro/internal/generator"
 	"os"
 	"strings"
 	"text/template"
 )
 
-type generateCodeChain struct {
-	data entity.Config
+type generateCodeChain struct{}
+
+func NewGenerateCodeChain() *generateCodeChain {
+	return &generateCodeChain{}
 }
 
-func NewGenerateCodeChain(data entity.Config) *generateCodeChain {
-	return &generateCodeChain{
-		data: data,
-	}
-}
-
-func (g *generateCodeChain) Apply(fs *afero.Afero) (*afero.Afero, error) {
-	err := fs.Walk(g.data.App.WorkDir,
+func (g *generateCodeChain) Apply(fs *afero.Afero, data entity.Config) (*afero.Afero, error) {
+	err := fs.Walk("/",
 		func(path string, f os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
 			if f.IsDir() {
 				return nil
 			}
@@ -32,15 +33,18 @@ func (g *generateCodeChain) Apply(fs *afero.Afero) (*afero.Afero, error) {
 				return nil
 			}
 
-			fMap := template.FuncMap{
-				"toCamelCase": strcase.ToCamel,
-			}
+			fMap := generator.FunkMap
+			fMap["toCamelCase"] = strcase.ToCamel
 
 			buf := bytes.NewBuffer(nil)
 			t := template.New(f.Name()).Funcs(fMap)
-			tmpl := template.Must(t.ParseFiles(path))
+			content, err := fs.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			tmpl := template.Must(t.Parse(string(content)))
 
-			err = tmpl.Execute(buf, g.data)
+			err = tmpl.Execute(buf, data)
 			if err != nil {
 				return err
 			}

@@ -2,6 +2,7 @@ package mysqlchunk
 
 import (
 	_ "embed"
+	"goro/internal/config"
 )
 
 //go:embed build.tpl
@@ -12,28 +13,15 @@ const initName = "mysqlConn"
 const initType = "*sql.DB"
 const initHasErr = true
 
-type MysqlChunk struct{}
-
-func (m *MysqlChunk) GetName() string {
-	return name
-}
-
-func (m *MysqlChunk) GetDefinitionImports() string {
-	return "imports"
-}
-
-func (m *MysqlChunk) GetInit() string {
-	return initName
-}
-
-func (m *MysqlChunk) GetBuild() string {
-	return buildTmpl
-}
-
-func (m *MysqlChunk) GetConfig() string {
-	return ""
-}
-
-func NewMySQLChunk() *MysqlChunk {
-	return &MysqlChunk{}
+func NewMySQLChunk() config.Chunk {
+	return config.Chunk{
+		Name:              name,
+		Scope:             "storage",
+		ArgName:           "mysqlConnect",
+		ReturnType:        "*sql.DB",
+		DefinitionImports: "\"database/sql\"",
+		Initialization:    initName,
+		Build:             buildTmpl,
+		Configs:           "mysql configs",
+	}
 }

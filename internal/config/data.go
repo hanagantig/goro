@@ -28,8 +28,20 @@ func (s DependencyName) String() string {
 type Config struct {
 	App          App                           `yaml:"app"`
 	UseCase      UseCase                       `yaml:"use_case"`
-	Storages     StorageList                   `yaml:"storages"`
+	Storages     []string                      `yaml:"storages"`
 	Dependencies map[DependencyName]Dependency `yaml:"dependencies"`
+	Chunks       []Chunk
+}
+
+type Chunk struct {
+	Name              string
+	Scope             string
+	ArgName           string
+	ReturnType        string
+	DefinitionImports string
+	Initialization    string
+	Build             string
+	Configs           string
 }
 
 type UseCase struct {
@@ -89,8 +101,10 @@ func (d *Config) Validate() error {
 		return fmt.Errorf("module, name and work_dir can't be empty")
 	}
 	for depName, dep := range d.Dependencies {
-		if _, ok := d.Storages[StorageName(depName)]; ok {
-			return fmt.Errorf("dependency \"%v\" has the same name with storage", depName)
+		for _, store := range d.Storages {
+			if store == depName.String() {
+				return fmt.Errorf("dependency \"%v\" has the same name with storage", depName)
+			}
 		}
 
 		for _, dpName := range dep.Deps {
@@ -99,7 +113,13 @@ func (d *Config) Validate() error {
 			}
 
 			_, okDep := d.Dependencies[DependencyName(dpName)]
-			_, okStore := d.Storages[StorageName(dpName)]
+			okStore := false
+			for _, store := range d.Storages {
+				if store == dpName {
+					okStore = true
+				}
+			}
+
 			if !okDep && !okStore {
 				return fmt.Errorf("undefined dep name \"%v\" in \"%v\" dependency", dpName, depName)
 			}

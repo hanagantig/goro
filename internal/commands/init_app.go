@@ -28,14 +28,18 @@ func InitApp(configPath string) {
 		log.Fatal(err)
 	}
 
-	g := generator.NewGenerator()
+	g := generator.NewGenerator(cfg)
 
-	g.AddChain(chains.NewFitFileNameChain(cfg))
-	g.AddChain(chains.NewFitFileExtensionChain(cfg))
-	g.AddChain(chains.NewGenerateCodeChain(cfg))
-	g.AddChain(chains.NewModInitChain(cfg))
-	g.AddChain(chains.NewModTidyChain(cfg.App.WorkDir))
+	g.AddChain(chains.NewFitFileNameChain())
+	g.AddChain(chains.NewGenerateCodeChain())
+	g.AddChain(chains.NewFitFileExtensionChain())
+	g.AddChain(chains.NewSaveFilesChain())
+	g.AddChain(chains.NewModInitChain())
+	g.AddChain(chains.NewModTidyChain())
 
 	err = g.Generate()
-	_ = err
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }

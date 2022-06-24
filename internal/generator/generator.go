@@ -11,7 +11,7 @@ import (
 
 type Chain interface {
 	Name() string
-	Apply(fs *afero.Afero) (*afero.Afero, error)
+	Apply(fs *afero.Afero, data entity.Config) (*afero.Afero, error)
 	Rollback() error
 }
 
@@ -22,10 +22,11 @@ type Generator struct {
 	skeleton skeleton
 }
 
-func NewGenerator() *Generator {
+func NewGenerator(config entity.Config) *Generator {
 	return &Generator{
 		chains:   make([]Chain, 0),
 		skeleton: singleServiceSkeleton,
+		config:   config,
 	}
 }
 
@@ -55,7 +56,7 @@ func (g *Generator) getTemplateFS() (*afero.Afero, error) {
 				return nil
 			}
 
-			content, err := g.skeleton.template.ReadFile(savePath)
+			content, err := g.skeleton.template.ReadFile(path)
 			if err != nil {
 				return err
 			}
@@ -72,9 +73,26 @@ func (g *Generator) getTemplateFS() (*afero.Afero, error) {
 	return afs, err
 }
 
-func (g *Generator) Generate() error {
+func (g *Generator) loadChunks() error {
+	for _, name := range g.config.Storages {
+		ch, ok := supportedChunks[name]
+		if !ok {
+			return fmt.Errorf("%w: %v", UnsupportedChunkErr, name)
+		}
 
+		g.config.Chunks = append(g.config.Chunks, ch)
+	}
+
+	return nil
+}
+
+func (g *Generator) Generate() error {
 	fs, err := g.getTemplateFS()
+	if err != nil {
+		return err
+	}
+
+	err = g.loadChunks()
 	if err != nil {
 		return err
 	}
@@ -83,7 +101,7 @@ func (g *Generator) Generate() error {
 		fmt.Printf("chain #%d: %s \n", k+1, ch.Name())
 		_, err = fs.ReadDir("cmd")
 
-		fs, err = ch.Apply(fs)
+		fs, err = ch.Apply(fs, g.config)
 		if err != nil {
 			fmt.Printf("%s fail: %v", ch.Name(), err)
 			_ = ch.Rollback()

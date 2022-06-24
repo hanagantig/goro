@@ -7,19 +7,15 @@ import (
 	"os/exec"
 )
 
-type modInitChain struct {
-	data entity.Config
+type modInitChain struct{}
+
+func NewModInitChain() *modInitChain {
+	return &modInitChain{}
 }
 
-func NewModInitChain(data entity.Config) *modInitChain {
-	return &modInitChain{
-		data: data,
-	}
-}
-
-func (m *modInitChain) Apply(fs *afero.Afero) (*afero.Afero, error) {
-	cmd := exec.Command("go", "mod", "init", m.data.App.Name)
-	cmd.Dir = m.data.App.WorkDir
+func (m *modInitChain) Apply(fs *afero.Afero, data entity.Config) (*afero.Afero, error) {
+	cmd := exec.Command("go", "mod", "init", data.App.Name)
+	cmd.Dir = data.App.WorkDir
 
 	output, err := cmd.CombinedOutput()
 
@@ -31,10 +27,10 @@ func (m *modInitChain) Apply(fs *afero.Afero) (*afero.Afero, error) {
 	return fs, nil
 }
 
-func (g *modInitChain) Name() string {
+func (m *modInitChain) Name() string {
 	return "Go mod init"
 }
 
-func (g *modInitChain) Rollback() error {
+func (m *modInitChain) Rollback() error {
 	return nil
 }

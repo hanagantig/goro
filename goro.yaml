@@ -4,9 +4,7 @@ app:
   work_dir: "/Users/hanagantig/tmp/gorotest"
 
 storages:
-  mysqlx:
-    type: mysqlx
-    connection: "*sqlx.DB"
+  - mysql
 
 use_case:
   pkg: "internal/pepe/usecase"
@@ -24,7 +22,7 @@ dependencies:
     pkg: "internal/adapter/repository"
     type: "*repository.MyRepo"
     build_func: "repository.NewMyRepo"
-    deps: [mysqlx]
+    deps: [mysql]
 
   myService:
     pkg: "internal/service/pongservice"

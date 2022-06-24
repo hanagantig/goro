@@ -4,32 +4,27 @@ import (
 	"github.com/spf13/afero"
 	entity "goro/internal/config"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
-type fitFileExtensionChain struct {
-	data entity.Config
+type fitFileExtensionChain struct{}
+
+func NewFitFileExtensionChain() *fitFileExtensionChain {
+	return &fitFileExtensionChain{}
 }
 
-func NewFitFileExtensionChain(data entity.Config) *fitFileExtensionChain {
-	return &fitFileExtensionChain{
-		data: data,
-	}
-}
-
-func (f *fitFileExtensionChain) Apply(fs *afero.Afero) (*afero.Afero, error) {
-	err := filepath.WalkDir(f.data.App.WorkDir,
-		func(path string, d os.DirEntry, err error) error {
+func (f *fitFileExtensionChain) Apply(fs *afero.Afero, data entity.Config) (*afero.Afero, error) {
+	err := fs.Walk("/",
+		func(path string, f os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
-			if d.IsDir() {
+			if f.IsDir() {
 				return nil
 			}
 
-			if strings.Contains(d.Name(), ".tmpl") {
-				if _, err = os.Stat(path); !os.IsNotExist(err) {
+			if strings.Contains(f.Name(), ".tmpl") {
+				if _, err = fs.Stat(path); !os.IsNotExist(err) {
 					err = fs.Rename(path, strings.Replace(path, ".tmpl", "", 1))
 					if err != nil {
 						return err

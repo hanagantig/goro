@@ -1,4 +1,4 @@
-func newMySQLConnect(cfg config.MySQLConfig) (*sql.DB, error) {
+func (a *App) newMySQLConnect(cfg config.MySQLConfig) (*sql.DB, error) {
     builder := strings.Builder{}
     builder.WriteString(cfg.User)
     builder.WriteByte(':')
@@ -35,7 +35,7 @@ func newMySQLConnect(cfg config.MySQLConfig) (*sql.DB, error) {
 
     db, err := sql.Open("mysql", dsn)
     if err != nil {
-        a.logger.Fatal("Failed to init mysql", zap.Error(err))
+        return nil, err
     }
 
     db.SetConnMaxLifetime(cfg.ConnMaxLifetime)

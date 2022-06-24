@@ -3,22 +3,19 @@ package chains
 import (
 	"errors"
 	"github.com/spf13/afero"
+	entity "goro/internal/config"
 	"os/exec"
 )
 
-type modTidyChain struct {
-	workDir string
+type modTidyChain struct{}
+
+func NewModTidyChain() *modTidyChain {
+	return &modTidyChain{}
 }
 
-func NewModTidyChain(workDir string) *modTidyChain {
-	return &modTidyChain{
-		workDir: workDir,
-	}
-}
-
-func (m *modTidyChain) Apply(fs *afero.Afero) (*afero.Afero, error) {
+func (m *modTidyChain) Apply(fs *afero.Afero, data entity.Config) (*afero.Afero, error) {
 	cmd := exec.Command("go", "mod", "tidy")
-	cmd.Dir = m.workDir
+	cmd.Dir = data.App.WorkDir
 
 	output, err := cmd.CombinedOutput()
 	out := string(output)

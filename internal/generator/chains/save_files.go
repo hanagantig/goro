@@ -4,26 +4,26 @@ import (
 	"github.com/spf13/afero"
 	entity "goro/internal/config"
 	"os"
+	"path/filepath"
 )
 
 type saveFilesChain struct {
 	data entity.Config
 }
 
-func NewSaveFilesChain(data entity.Config) *saveFilesChain {
-	return &saveFilesChain{
-		data: data,
-	}
+func NewSaveFilesChain() *saveFilesChain {
+	return &saveFilesChain{}
 }
 
-func (g *saveFilesChain) Apply(fs *afero.Afero) (*afero.Afero, error) {
-	err := fs.Walk(g.data.App.WorkDir,
+func (g *saveFilesChain) Apply(fs *afero.Afero, data entity.Config) (*afero.Afero, error) {
+	err := fs.Walk("/",
 		func(path string, f os.FileInfo, err error) error {
+			appPath := filepath.Join(data.App.WorkDir, path)
 			if f.IsDir() {
-				return os.MkdirAll(path, os.FileMode(0775))
+				return os.MkdirAll(appPath, os.FileMode(0775))
 			}
 
-			file, err := os.Open(path)
+			file, err := os.Create(appPath)
 			if err != nil {
 				return err
 			}
