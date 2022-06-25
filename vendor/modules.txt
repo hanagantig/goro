@@ -4,6 +4,8 @@ github.com/chzyer/readline
 # github.com/fatih/color v1.13.0
 ## explicit; go 1.13
 github.com/fatih/color
+# github.com/hanagantig/gracy v0.0.0-20220614134223-823658db0aec
+## explicit; go 1.18
 # github.com/iancoleman/strcase v0.2.0
 ## explicit; go 1.16
 github.com/iancoleman/strcase
@@ -23,8 +25,6 @@ github.com/mattn/go-colorable
 github.com/mattn/go-isatty
 # github.com/spf13/afero v1.8.2
 ## explicit; go 1.13
-github.com/spf13/afero
-github.com/spf13/afero/mem
 # github.com/spf13/cobra v1.4.0
 ## explicit; go 1.15
 github.com/spf13/cobra
