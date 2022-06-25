@@ -2,11 +2,11 @@ package chains
 
 import (
 	"bytes"
+	entity "github.com/hanagantig/goro/internal/config"
+	"github.com/hanagantig/goro/internal/generator"
 	"github.com/iancoleman/strcase"
 	"github.com/spf13/afero"
 	"go/format"
-	entity "goro/internal/config"
-	"goro/internal/generator"
 	"os"
 	"strings"
 	"text/template"

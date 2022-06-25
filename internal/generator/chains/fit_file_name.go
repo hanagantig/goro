@@ -1,9 +1,9 @@
 package chains
 
 import (
+	entity "github.com/hanagantig/goro/internal/config"
 	"github.com/iancoleman/strcase"
 	"github.com/spf13/afero"
-	entity "goro/internal/config"
 	"os"
 	"strings"
 )

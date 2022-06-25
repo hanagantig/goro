@@ -2,7 +2,7 @@ package generator
 
 import (
 	"fmt"
-	entity "goro/internal/config"
+	entity "github.com/hanagantig/goro/internal/config"
 	"strings"
 	"text/template"
 )

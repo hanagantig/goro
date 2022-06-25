@@ -1,4 +1,4 @@
-module goro
+module github.com/hanagantig/goro
 
 go 1.18
 

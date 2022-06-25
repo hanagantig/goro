@@ -1,10 +1,10 @@
 package commands
 
 import (
-	"goro/internal/config"
-	"goro/internal/generator"
-	"goro/internal/generator/chains"
-	"goro/internal/pkg/log"
+	"github.com/hanagantig/goro/internal/config"
+	"github.com/hanagantig/goro/internal/generator"
+	"github.com/hanagantig/goro/internal/generator/chains"
+	"github.com/hanagantig/goro/internal/pkg/log"
 )
 
 func InitApp(configPath string) {

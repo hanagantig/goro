@@ -1,8 +1,8 @@
 package cmd
 
 import (
+	"github.com/hanagantig/goro/internal/commands"
 	"github.com/spf13/cobra"
-	"goro/internal/commands"
 )
 
 var goroCnf string

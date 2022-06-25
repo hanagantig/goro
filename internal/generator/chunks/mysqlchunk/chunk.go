@@ -2,7 +2,7 @@ package mysqlchunk
 
 import (
 	_ "embed"
-	"goro/internal/config"
+	"github.com/hanagantig/goro/internal/config"
 )
 
 //go:embed build.tpl
