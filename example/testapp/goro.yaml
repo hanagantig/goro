@@ -1,13 +1,13 @@
 app:
-  name: pepe
-  module: pepe
-  work_dir: "/Users/hanagantig/tmp/gorotest"
+  name: testapp
+  module: testapp
+  work_dir: ""
 
 storages:
   - mysql
 
 use_case:
-  pkg: "internal/pepe/usecase"
+  pkg: "internal/usecase"
   type: "*usecase.UseCase"
   build_func: "usecase.NewUseCase"
   deps: [myService]
