@@ -3,7 +3,7 @@ package generator
 import (
 	"fmt"
 	entity "github.com/hanagantig/goro/internal/config"
-	"github.com/spf13/afero"
+	"github.com/hanagantig/goro/pkg/afero"
 	"io/fs"
 	"os"
 	"sync"

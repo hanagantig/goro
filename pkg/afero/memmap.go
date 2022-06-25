@@ -15,7 +15,7 @@ package afero
 
 import (
 	"fmt"
-	"github.com/spf13/afero/mem"
+	"github.com/hanagantig/goro/pkg/afero/mem"
 	"log"
 	"os"
 	"path/filepath"

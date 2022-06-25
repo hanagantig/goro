@@ -3,7 +3,7 @@ package chains
 import (
 	"errors"
 	entity "github.com/hanagantig/goro/internal/config"
-	"github.com/spf13/afero"
+	"github.com/hanagantig/goro/pkg/afero"
 	"os/exec"
 )
 
