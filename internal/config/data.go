@@ -39,7 +39,7 @@ type Chunk struct {
 	ArgName           string
 	ReturnType        string
 	DefinitionImports string
-	Initialization    string
+	InitFunc          string
 	Build             string
 	Configs           string
 }

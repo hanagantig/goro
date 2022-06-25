@@ -20,7 +20,7 @@ var FunkMap = template.FuncMap{
 func RenderImports(scope string, chunks []entity.Chunk) string {
 	res := strings.Builder{}
 	for _, ch := range chunks {
-		fmt.Fprintf(&res, "%v", ch.DefinitionImports)
+		fmt.Fprintf(&res, "%v\n", ch.DefinitionImports)
 	}
 
 	return res.String()
@@ -38,10 +38,9 @@ func RenderDefinitions(scope string, chunks []entity.Chunk) string {
 func RenderInitializationsWithError(scope, prefix string, chunks []entity.Chunk) string {
 	res := strings.Builder{}
 	for _, ch := range chunks {
-		tmpName := "mysqlConn"
-		fmt.Fprintf(&res, "%v,%v := %v.newMySQLConnect(cfg.MainDB)\n", tmpName, "err", prefix)
+		fmt.Fprintf(&res, "%v,%v := %v.%v(cfg.MainDB)\n", ch.ArgName, "err", prefix, ch.InitFunc)
 		fmt.Fprintf(&res, "if err != nil {\n return nil, err\n}\n")
-		fmt.Fprintf(&res, "%v.%v = %v\n", prefix, ch.Name, tmpName)
+		fmt.Fprintf(&res, "%v.%v = %v\n", prefix, ch.Name, ch.ArgName)
 	}
 
 	return res.String()

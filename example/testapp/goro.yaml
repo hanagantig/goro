@@ -5,6 +5,7 @@ app:
 
 storages:
   - mysql
+  - mysqlx
 
 use_case:
   pkg: "internal/usecase"

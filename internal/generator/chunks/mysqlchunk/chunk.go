@@ -20,7 +20,7 @@ func NewMySQLChunk() config.Chunk {
 		ArgName:           "mysqlConnect",
 		ReturnType:        "*sql.DB",
 		DefinitionImports: "\"database/sql\"",
-		Initialization:    initName,
+		InitFunc:          "newMySQLConnect",
 		Build:             buildTmpl,
 		Configs:           "mysql configs",
 	}
