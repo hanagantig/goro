@@ -4,7 +4,7 @@ package app
 
 import (
 	"sync"
-    {{ renderImports "storage" .Chunks }}
+    {{ renderImports "storage" "definition" .Chunks }}
 	"{{ .App.Module }}/internal/config"
 	"go.uber.org/zap/zapcore"
 )

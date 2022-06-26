@@ -1,4 +1,4 @@
-func (a *App) newMySQLConnect(cfg config.MySQLConfig) (*sql.DB, error) {
+func (a *App) newMySQLConnect(cfg config.SQLConfig) (*sql.DB, error) {
     builder := strings.Builder{}
     builder.WriteString(cfg.User)
     builder.WriteByte(':')

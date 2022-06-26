@@ -1,7 +1,7 @@
 package app
 
 import (
-    {{ renderImports "storage" .Chunks }}
+    {{ renderImports "storage" "definition" .Chunks }}
 
     "{{ $.App.Module }}/{{$.UseCase.Pkg}}"
 

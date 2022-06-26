@@ -22,7 +22,7 @@ type ThirdPartyService struct {
 	Url string
 }
 
-type MySQLConfig struct {
+type SQLConfig struct {
 	Host              string
 	Port              string
 	DBName            string
@@ -47,7 +47,7 @@ type Config struct {
 	// Server
 	HTTP HTTPConfig
 
-	MainDB MySQLConfig
+	MainDB SQLConfig
 
 	Service1 ThirdPartyService
 }
@@ -79,7 +79,7 @@ func NewConfig(filePath string) (Config, error) {
 			WriteTimeout: viper.GetDuration("http.write_timeout"),
 		},
 
-		MainDB: MySQLConfig{
+		MainDB: SQLConfig{
 			Host:              viper.GetString("main_db.host"),
 			Port:              viper.GetString("main_db.port"),
 			DBName:            viper.GetString("main_db.name"),

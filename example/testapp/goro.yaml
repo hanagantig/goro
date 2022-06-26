@@ -6,6 +6,7 @@ app:
 storages:
   - mysql
   - mysqlx
+  - postgres
 
 use_case:
   pkg: "internal/usecase"
@@ -23,7 +24,7 @@ dependencies:
     pkg: "internal/adapter/repository"
     type: "*repository.MyRepo"
     build_func: "repository.NewMyRepo"
-    deps: [mysql]
+    deps: [mysql, postgres]
 
   myService:
     pkg: "internal/service/pongservice"

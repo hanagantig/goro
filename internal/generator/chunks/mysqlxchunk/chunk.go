@@ -20,6 +20,7 @@ func NewMySQLxChunk() config.Chunk {
 		ArgName:           initName,
 		ReturnType:        "*sqlx.DB",
 		DefinitionImports: "\"github.com/jmoiron/sqlx\"",
+		BuildImports:      "\"github.com/jmoiron/sqlx\"",
 		InitFunc:          "newMySQLxConnect",
 		Build:             buildTmpl,
 		Configs:           "mysqlx configs",

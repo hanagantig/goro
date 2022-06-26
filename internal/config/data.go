@@ -39,6 +39,7 @@ type Chunk struct {
 	ArgName           string
 	ReturnType        string
 	DefinitionImports string
+	BuildImports      string
 	InitFunc          string
 	Build             string
 	Configs           string

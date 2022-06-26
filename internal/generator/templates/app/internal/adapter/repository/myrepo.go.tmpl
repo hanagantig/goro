@@ -6,11 +6,13 @@ import (
 
 type MyRepo struct {
 	conn *sql.DB
+	pgConn *sql.DB
 }
 
-func NewMyRepo(conn *sql.DB) *MyRepo {
+func NewMyRepo(conn, postgresConn *sql.DB) *MyRepo {
 	return &MyRepo{
 		conn: conn,
+		pgConn: postgresConn,
 	}
 }
 

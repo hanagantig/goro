@@ -1,4 +1,4 @@
-func (a *App) newMySQLxConnect(cfg config.SQLConfig) (*sqlx.DB, error) {
+func (a *App) newPostgresConnect(cfg config.SQLConfig) (*sql.DB, error) {
     builder := strings.Builder{}
     builder.WriteString(cfg.User)
     builder.WriteByte(':')
@@ -33,10 +33,12 @@ func (a *App) newMySQLxConnect(cfg config.SQLConfig) (*sqlx.DB, error) {
     }
     dsn := builder.String()
 
-    db, err := sqlx.Open("mysql", dsn)
+    pgxCfg, err := pgx.ParseConfig(dsn)
     if err != nil {
         return nil, err
     }
+
+    db := stdlib.OpenDB(*pgxCfg)
 
     db.SetConnMaxLifetime(cfg.ConnMaxLifetime)
     db.SetMaxOpenConns(cfg.MaxOpenConns)

@@ -17,10 +17,17 @@ var FunkMap = template.FuncMap{
 	"renderBuild":                    RenderBuild,
 }
 
-func RenderImports(scope string, chunks []entity.Chunk) string {
+func RenderImports(scope, stage string, chunks []entity.Chunk) string {
 	res := strings.Builder{}
 	for _, ch := range chunks {
-		fmt.Fprintf(&res, "%v\n", ch.DefinitionImports)
+		switch stage {
+		case "build":
+			fmt.Fprintf(&res, "%v\n", ch.BuildImports)
+		case "definition":
+			fmt.Fprintf(&res, "%v\n", ch.DefinitionImports)
+		default:
+			fmt.Fprintf(&res, "%v\n", ch.DefinitionImports)
+		}
 	}
 
 	return res.String()
