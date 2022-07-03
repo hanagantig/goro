@@ -36,85 +36,47 @@ And you can see `pong` for your `ping`
 
 # Layout
 
-`api` - your api cpecs (swagger, protobuf etc.)
-
-|_ `v1` - version and particular specs inside
-
-`build` - folder with docker files, docker-compose files and so on
-
-`cmd`  - folder with commands provided by your service
-
- |_`command_name.go` - service command implementation
-  
-    example:
-    ```go
-    // example code
-    ```
-
-`configs` - service config files
-    |_ `prod.conf.yaml`
-    |_ `local.conf.yaml`
-    |_ `dev.conf.yaml`
-
-`internal` - folder for your internal package. Usually you write code here.  
-    |_ `app` - App structure with bootstrapping, definitions and DI
-    |_ `entity` - service entity (they should be used globally through all layers as a data transmitters)
-    |_ `service` - list of our services with business logic. This layer interacts with adapter layer.
-    |_ `usecase` - usecase layer represent our service behaviour. It's describes all app features - interface for whole service. 
-                   Use case orchestrate with services and aggregate service methods calls. It can be used only in handler layer.
-
-  Example:
-
-    ```go
-    func NewApp(configPath string) (*App, error) {
-       cfg, err := config.NewConfig(configPath)
-       if err != nil {
-          return nil, err
-       }
-    
-       app := &App{
-          cOnce:  &sync.Once{},
-          hcOnce: &sync.Once{},
-          cfg:    cfg,
-       }
-    
-       app.initLogger()
-       app.initHealthChecker()
-    
-       if err := app.initDataBase(); err != nil {
-          return nil, err
-       }
-    
-       if err := app.initContainer(); err != nil {
-          return nil, err
-       }
-    
-       return app, nil
-    }
-    ```
-
-   |_ `adapter` - your infrastructure is here. Adapter folder contains packages for database connection, other http/grpc service clients, AMQP connections etc. ...
-
-  |_ `webapi`
-
-  |_ `sqlrepository`
-
-  |_ `config` - you can find here a code for parsing and loading service configs
-
-  |_ `handler` - our handlers - a layer to communicate with client. It describes our transport and request/response models.
-        |_ `http` - http protocol handler
-            |_ `http.go` - http server implementation
-            |_ `router.go` - base router implementation
-            |_ `api` - package for service http API methods
-                |_ `v1`
-                    |_ `models` - request/response methods (usually generated from swagger file)
-                        |_ `handler.go` - api methods implementation 
-                        |_ `router.go`  - api methods routing
-
-        |_ `grpc` - grpc protocol handlers
-        |_ `amqp` - amqp protocol handlers
-        ...
-`pkg` - your public pkgs
+```
+├── api - your api specs (swagger, protobuf etc.)
+│   ├── v1 - version and particular specs inside
+│   │   └── swagger.yaml
+│   │
+├── build - folder with docker files, docker-compose files and so on
+│   ├── Dockerfile
+│   └── ...
+├── cmd  - folder with commands provided by your service
+│   ├── command_name.go - service command implementation
+│   └── ...
+├── configs - service config files
+│   ├── prod.conf.yaml
+│   ├── local.conf.yaml
+│   └── dev.conf.yaml
+│   
+├── internal - folder for your internal package. Usually you write code here.
+│   ├── app - App structure with bootstrapping, definitions and DI
+│   │   ├── entity - service entity (they should be used globally through all layers as a data transmitters)
+│   │   ├── service - list of our services with business logic. This layer interacts with adapter layer.
+│   │   └── usecase - usecase layer represent our service behaviour. It's describes all app features - interface for whole service. 
+│   │                 Use case orchestrate with services and aggregate service methods calls. It can be used only in handler layer.
+│   ├── adapter - your infrastructure is here. Adapter folder contains packages for database connection, other http/grpc service clients, AMQP connections etc. ...
+│   │   ├── webapi
+│   │   ├── sqlrepository
+│   │   └── ...
+│   ├── config - you can find here a code for parsing and loading service configs
+│   └── handler - our handlers - a layer to communicate with client. It describes our transport and request/response models.
+│       ├── http - http protocol handler
+│       │   ├── http.go - http server implementation
+│       │   ├── router.go - base router implementation
+│       │   └── api - package for service http API methods
+│       │       └── v1
+│       │           └── models - request/response methods (usually generated from swagger file)
+│       │               ├── handler.go - api methods implementation 
+│       │               └── router.go  - api methods routing
+│       ├── grpc - grpc protocol handlers
+│       ├── amqp - amqp protocol handlers
+│       └── ...
+└── pkg - your public pkgs
+```
 
 **root files**
 - go.mod
