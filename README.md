@@ -36,6 +36,8 @@ And you can see `pong` for your `ping`
 
 # Layout
 
+![Layout schema](https://github.com/hanagantig/goro/blob/main/example/layout.png?raw=true "layout")
+
 ```
 ├── api - your api specs (swagger, protobuf etc.)
 │   ├── v1 - version and particular specs inside
@@ -54,9 +56,12 @@ And you can see `pong` for your `ping`
 │   
 ├── internal - folder for your internal package. Usually you write code here.
 │   ├── app - App structure with bootstrapping, definitions and DI
-│   │   ├── entity - service entity (they should be used globally through all layers as a data transmitters)
-│   │   ├── service - list of our services with business logic. This layer interacts with adapter layer.
-│   │   └── usecase - usecase layer represent our service behaviour. It's describes all app features - interface for whole service. 
+│   │
+│   ├── entity - service entity (they should be used globally through all layers as a data transmitters)
+│   │
+│   ├── service - list of our services with business logic. This layer interacts with adapter layer.
+│   │
+│   ├── usecase - usecase layer represent our service behaviour. It's describes all app features - interface for whole service. 
 │   │                 Use case orchestrate with services and aggregate service methods calls. It can be used only in handler layer.
 │   ├── adapter - your infrastructure is here. Adapter folder contains packages for database connection, other http/grpc service clients, AMQP connections etc. ...
 │   │   ├── webapi
