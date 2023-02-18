@@ -4,6 +4,7 @@ package app
 
 import (
 	"sync"
+	"errors"
     {{ renderImports "storage" "definition" .Chunks }}
 	"{{ .App.Module }}/internal/config"
 	"go.uber.org/zap/zapcore"
@@ -33,6 +34,8 @@ type App struct {
 	logger Logger
 }
 
+var a *App
+
 func NewApp(configPath string) (*App, error) {
 	cfg, err := config.NewConfig(configPath)
 	if err != nil {
@@ -57,4 +60,16 @@ func NewApp(configPath string) (*App, error) {
 	app.c = NewContainer({{range .Chunks}}{{if eq .Scope `storage`}}app.{{.Name}},{{end}}{{end}})
 
 	return app, nil
+}
+
+func SetGlobalApp(app *App) {
+	a = app
+}
+
+func GetGlobalApp() (*App, error) {
+	if a == nil {
+		return nil, errors.New("global app is not initialized")
+	}
+
+	return a, nil
 }
