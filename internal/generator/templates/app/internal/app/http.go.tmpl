@@ -8,19 +8,21 @@ import (
 	"go.uber.org/zap"
 )
 
-func (a *App) Start() {
+func (a *App) StartHTTPServer() error {
 	go func() {
-		a.StartHttpServer()
+		a.startHTTPServer()
 	}()
 
 	err := gracy.Wait()
 	if err != nil {
 		a.logger.Error("failed to gracefully shutdown server", zap.Error(err))
+		return err
 	}
 	a.logger.Info("server gracefully stopped")
+	return nil
 }
 
-func (a *App) StartHttpServer() {
+func (a *App) startHTTPServer() {
 	handler := v1.NewHandler(a.c.GetUseCase(), a.logger)
 
 	router := http.NewRouter()
