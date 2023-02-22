@@ -14,6 +14,8 @@ var storagePackages = map[string]string{
 }
 
 type DependencyName string
+type ServiceName string
+type AdapterName string
 type StorageName string
 type StorageList map[StorageName]Storage
 
@@ -25,11 +27,21 @@ func (s DependencyName) String() string {
 	return string(s)
 }
 
+func (s ServiceName) String() string {
+	return string(s)
+}
+
+func (s AdapterName) String() string {
+	return string(s)
+}
+
 type Config struct {
 	App          App                           `yaml:"app"`
 	UseCase      UseCase                       `yaml:"use_case"`
 	Storages     []string                      `yaml:"storages"`
 	Dependencies map[DependencyName]Dependency `yaml:"dependencies"`
+	Services     map[ServiceName]Dependency    `yaml:"services"`
+	Adapters     map[AdapterName]Dependency    `yaml:"adapters"`
 	Chunks       []Chunk
 }
 

@@ -5,8 +5,14 @@ import (
 
     "{{ $.App.Module }}/{{$.UseCase.Pkg}}"
 
-    {{if .Dependencies}}
-        {{range .Dependencies -}}
+    {{if .Services}}
+        {{range .Services -}}
+            "{{ $.App.Module }}/{{.Pkg}}"
+        {{end -}}
+    {{end}}
+
+    {{if .Adapters}}
+        {{range .Adapters -}}
             "{{ $.App.Module }}/{{.Pkg}}"
         {{end -}}
     {{end}}
@@ -31,8 +37,6 @@ func (c *Container) GetUseCase() {{ $.UseCase.Type }} {
     return {{ $.UseCase.BuildFunc }}({{range $p := $.UseCase.Deps}} c.get{{toCamelCase $p}}(), {{end}})
 }
 
-{{ renderDependency "storage" "dependency" .Chunks }}
-
 {{range .Chunks}}
     {{if eq .Scope `storage`}}
         func (c *Container) get{{toCamelCase .Name}}() {{.ReturnType}} {
@@ -41,10 +45,19 @@ func (c *Container) GetUseCase() {{ $.UseCase.Type }} {
     {{end}}
 {{end}}
 
-{{if .Dependencies}}
-    {{range $key, $val := .Dependencies}}
+{{if .Services}}
+    {{range $key, $val := .Services}}
         func (c *Container) get{{toCamelCase $key.String }}() {{ $val.Type }} {
             
+            return {{ $val.BuildFunc }} ({{range $p := $val.Deps}} c.get{{toCamelCase $p}}(), {{end}})
+        }
+    {{end}}
+{{end}}
+
+{{if .Adapters}}
+    {{range $key, $val := .Adapters}}
+        func (c *Container) get{{toCamelCase $key.String }}() {{ $val.Type }} {
+
             return {{ $val.BuildFunc }} ({{range $p := $val.Deps}} c.get{{toCamelCase $p}}(), {{end}})
         }
     {{end}}

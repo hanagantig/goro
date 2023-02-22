@@ -1,7 +1,7 @@
 app:
   name: testapp
   module: testapp
-  work_dir: ""
+  work_dir: "/Users/hanagantig/gorotmp"
 
 storages:
   - mysql
@@ -19,15 +19,22 @@ handlers:
   - grpc
   - amqp
 
-dependencies:
-  myRepo:
-    pkg: "internal/adapter/repository"
-    type: "*repository.MyRepo"
-    build_func: "repository.NewMyRepo"
-    deps: [mysql, postgres]
-
+services:
   myService:
     pkg: "internal/service/pongservice"
     type: "*pongservice.MyService"
     build_func: "pongservice.NewMyService"
     deps: [ myRepo ]
+
+  pinPongalka:
+    pkg: "internal/service/pongservice"
+    type: "*pongservice.MyService"
+    build_func: "pongservice.NewMyService"
+    deps: [ myRepo ]
+
+adapters:
+  myRepo:
+    pkg: "internal/adapter/repository"
+    type: "*repository.MyRepo"
+    build_func: "repository.NewMyRepo"
+    deps: [ mysql, postgres ]
