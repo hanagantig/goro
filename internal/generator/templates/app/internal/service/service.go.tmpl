@@ -3,7 +3,7 @@ package {{$.GetPackageName}}
 {{if .Deps}}
     {{range $val := .Deps}}
         type {{$val}} interface {
-        	// TODO: define dependency methods here
+        	// TODO: define interface to inject a service or an adapter
         }
     {{end}}
 {{end}}

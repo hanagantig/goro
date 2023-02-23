@@ -62,6 +62,7 @@ type UseCase struct {
 	Pkg       string   `yaml:"pkg"`
 	Type      string   `yaml:"type"`
 	BuildFunc string   `yaml:"build_func"`
+	Methods   []string `yaml:"methods"`
 	Deps      []string `yaml:"deps"`
 }
 

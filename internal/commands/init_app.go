@@ -32,6 +32,7 @@ func InitApp(configPath string) {
 
 	g.AddChain(chains.NewFitFileNameChain())
 	g.AddChain(chains.NewGenerateServicesChain())
+	g.AddChain(chains.NewGenerateUseCaseChain())
 	g.AddChain(chains.NewGenerateCodeChain())
 	g.AddChain(chains.NewFitFileExtensionChain())
 	g.AddChain(chains.NewSaveFilesChain())

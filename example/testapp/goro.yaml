@@ -13,6 +13,10 @@ use_case:
   type: "*usecase.UseCase"
   build_func: "usecase.NewUseCase"
   deps: [myService]
+  methods:
+    - GetClients
+    - SignIn
+    - SignUp
 
 handlers:
   - http

@@ -1,23 +1,27 @@
 package usecase
 
-import (
-	"context"
-)
-
-type PongService interface {
-    GetPingAnswer() string
-}
+{{if .Deps}}
+    {{range $val := .Deps}}
+        type {{$val}} interface {
+        	// TODO: define interface to inject a service
+        }
+    {{end}}
+{{end}}
 
 type UseCase struct {
-    pongService PongService
+    {{if .Deps}}
+        {{range $val := .Deps}}
+            {{$val}} {{$val}}
+        {{end}}
+    {{end}}
 }
 
-func NewUseCase(ps PongService) *UseCase {
+func NewUseCase({{if .Deps}}{{range $val := .Deps}}{{$val}} {{$val}}{{end}}{{end}}) *UseCase {
 	return &UseCase{
-	    pongService: ps,
+	    {{if .Deps}}
+            {{range $val := .Deps}}
+                {{$val}}: {{$val}},
+            {{end}}
+        {{end}}
 	}
-}
-
-func (uc *UseCase) Pong(ctx context.Context) (string, error) {
-	return uc.pongService.GetPingAnswer(), nil
 }
