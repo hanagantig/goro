@@ -21,15 +21,16 @@ handlers:
 
 services:
   myService:
-    pkg: "internal/service/pongservice"
-    type: "*pongservice.MyService"
-    build_func: "pongservice.NewMyService"
+    pkg: "internal/service/myservice"
+    type: "*myservice.Service"
+    build_func: "myservice.NewMyService"
+    methods: ["getList", "getByFilter"]
     deps: [ myRepo ]
 
   pinPongalka:
-    pkg: "internal/service/pongservice"
-    type: "*pongservice.MyService"
-    build_func: "pongservice.NewMyService"
+    pkg: "internal/service/pinpongalka"
+    type: "*pinpongalka.Service"
+    build_func: "pinpongalka.NewService"
     deps: [ myRepo ]
 
 adapters:

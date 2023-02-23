@@ -3,6 +3,7 @@ package chains
 import (
 	entity "github.com/hanagantig/goro/internal/config"
 	"github.com/hanagantig/goro/pkg/afero"
+	"github.com/iancoleman/strcase"
 	"os"
 	"strings"
 )
@@ -16,8 +17,14 @@ func NewGenerateServicesChain() *generateServicesChain {
 func (g *generateServicesChain) Apply(fs *afero.Afero, data entity.Config) (*afero.Afero, error) {
 	servicePath := "/internal/service"
 	serviceFilePath := "/internal/service/service.go.tmpl"
+	methodFilePath := "/internal/service/method.go.tmpl"
 
 	svcTmpl, err := fs.ReadFile(serviceFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	methodTmpl, err := fs.ReadFile(methodFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +34,12 @@ func (g *generateServicesChain) Apply(fs *afero.Afero, data entity.Config) (*afe
 		return nil, err
 	}
 
-	for svcName, _ := range data.Services {
+	err = fs.Remove(methodFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	for svcName, svc := range data.Services {
 		pkgName := strings.ToLower(svcName.String())
 		path := servicePath + "/" + pkgName
 		if _, err := fs.Stat(path); os.IsNotExist(err) {
@@ -37,7 +49,7 @@ func (g *generateServicesChain) Apply(fs *afero.Afero, data entity.Config) (*afe
 			}
 		}
 
-		generated, err := generate(path, svcTmpl, data)
+		generated, err := generate(path, svcTmpl, svc)
 		if err != nil {
 			return nil, err
 		}
@@ -45,6 +57,25 @@ func (g *generateServicesChain) Apply(fs *afero.Afero, data entity.Config) (*afe
 		err = fs.WriteFile(path+"/service.go.tmpl", generated, 0644)
 		if err != nil {
 			return nil, err
+		}
+
+		for _, method := range svc.Methods {
+			methodData := struct {
+				PkgName    string
+				MethodName string
+			}{
+				PkgName:    svc.GetPackageName(),
+				MethodName: method,
+			}
+			generatedMethod, err := generate(path, methodTmpl, methodData)
+			if err != nil {
+				return nil, err
+			}
+
+			err = fs.WriteFile(path+"/"+strcase.ToSnake(method)+".go", generatedMethod, 0644)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 

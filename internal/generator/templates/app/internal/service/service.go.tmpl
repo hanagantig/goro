@@ -1,19 +1,27 @@
-package pongservice
+package {{$.GetPackageName}}
 
-type PongStorage interface {
-	GetPong() string
+{{if .Deps}}
+    {{range $val := .Deps}}
+        type {{$val}} interface {
+        	// TODO: define dependency methods here
+        }
+    {{end}}
+{{end}}
+
+type Service struct {
+	{{if .Deps}}
+        {{range $val := .Deps}}
+            {{$val}} {{$val}}
+        {{end}}
+    {{end}}
 }
 
-type MyService struct {
-	storage PongStorage
-}
-
-func NewMyService(st PongStorage) *MyService {
-	return &MyService{
-		storage: st,
+func New{{toCamelCase $.GetPackageName}}({{if .Deps}}{{range $val := .Deps}}{{$val}} {{$val}}{{end}}{{end}}) *Service {
+	return &Service{
+		{{if .Deps}}
+		    {{range $val := .Deps}}
+                {{$val}}: {{$val}},
+            {{end}}
+        {{end}}
 	}
-}
-
-func (s *MyService) GetPingAnswer() string {
-	return s.storage.GetPong()
 }

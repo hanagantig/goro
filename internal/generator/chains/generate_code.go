@@ -17,7 +17,7 @@ func NewGenerateCodeChain() *generateCodeChain {
 	return &generateCodeChain{}
 }
 
-func generate(path string, content []byte, data entity.Config) ([]byte, error) {
+func generate(path string, content []byte, data interface{}) ([]byte, error) {
 	fMap := generator.FuncMap
 
 	buf := bytes.NewBuffer(nil)

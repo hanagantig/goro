@@ -6,6 +6,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
+	"strings"
 )
 
 var storagePackages = map[string]string{
@@ -79,7 +80,17 @@ type Dependency struct {
 	Pkg       string   `yaml:"pkg"`
 	Type      string   `yaml:"type"`
 	BuildFunc string   `yaml:"build_func"`
+	Methods   []string `yaml:"methods"`
 	Deps      []string `yaml:"deps"`
+}
+
+func (d Dependency) GetPackageName() string {
+	path := strings.Split(d.Pkg, "/")
+	if len(path) > 0 {
+		return path[len(path)-1]
+	}
+
+	return ""
 }
 
 func (s *Storage) GetPackage() string {
