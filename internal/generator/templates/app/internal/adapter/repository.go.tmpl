@@ -1,0 +1,15 @@
+package {{$.GetPkgName}}
+
+import (
+    {{ $.Storage.GetPkgNameForImport }}
+)
+
+type Repository struct {
+	conn {{ $.Storage.GetConnectionType }}
+}
+
+func {{$.GetConstructorName}}(conn {{ $.Storage.GetConnectionType }}) *Repository {
+	return &Repository{
+		conn: conn,
+	}
+}

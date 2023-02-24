@@ -7,13 +7,13 @@ import (
 
     {{if .Services}}
         {{range .Services -}}
-            "{{ $.App.Module }}/{{.Pkg}}"
+            "{{ $.App.Module }}/internal/service/{{.GetPkgName}}"
         {{end -}}
     {{end}}
 
     {{if .Adapters}}
         {{range .Adapters -}}
-            "{{ $.App.Module }}/{{.Pkg}}"
+            "{{ $.App.Module }}/internal/adapter/{{.Storage.GetFolderName}}/{{.GetPkgName}}"
         {{end -}}
     {{end}}
 )
@@ -47,18 +47,18 @@ func (c *Container) GetUseCase() {{ $.UseCase.Type }} {
 
 {{if .Services}}
     {{range $key, $val := .Services}}
-        func (c *Container) get{{toCamelCase $key.String }}() {{ $val.Type }} {
+        func (c *Container) get{{toCamelCase $val.Name }}() *{{$val.GetPkgName}}.Service {
             
-            return {{ $val.BuildFunc }} ({{range $p := $val.Deps}} c.get{{toCamelCase $p}}(), {{end}})
+            return {{$val.GetPkgName}}.{{ $val.GetConstructorName }} ({{range $p := $val.Deps}} c.get{{toCamelCase $p}}(), {{end}})
         }
     {{end}}
 {{end}}
 
 {{if .Adapters}}
     {{range $key, $val := .Adapters}}
-        func (c *Container) get{{toCamelCase $key.String }}() {{ $val.Type }} {
+        func (c *Container) get{{toCamelCase $val.Name }}() *{{$val.GetPkgName}}.Repository {
 
-            return {{ $val.BuildFunc }} ({{range $p := $val.Deps}} c.get{{toCamelCase $p}}(), {{end}})
+            return {{$val.GetPkgName}}.{{ $val.GetConstructorName }} (c.get{{toCamelCase $val.Storage.String}}())
         }
     {{end}}
 {{end}}

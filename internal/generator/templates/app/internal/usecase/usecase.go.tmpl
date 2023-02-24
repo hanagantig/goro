@@ -10,17 +10,14 @@ package usecase
 
 type UseCase struct {
     {{if .Deps}}
-        {{range $val := .Deps}}
-            {{$val}} {{$val}}
+        {{range $val := .Deps}}{{$val}} {{$val}}
         {{end}}
     {{end}}
 }
 
-func NewUseCase({{if .Deps}}{{range $val := .Deps}}{{$val}} {{$val}}{{end}}{{end}}) *UseCase {
-	return &UseCase{
-	    {{if .Deps}}
-            {{range $val := .Deps}}
-                {{$val}}: {{$val}},
+func NewUseCase({{if .Deps}}{{range $val := .Deps}}{{$val}} {{$val}},{{end}}{{end}}) *UseCase {
+	return &UseCase{ {{if .Deps}}
+            {{range $val := .Deps}}{{$val}}: {{$val}},
             {{end}}
         {{end}}
 	}

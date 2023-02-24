@@ -31,6 +31,7 @@ func InitApp(configPath string) {
 	g := generator.NewGenerator(cfg)
 
 	g.AddChain(chains.NewFitFileNameChain())
+	g.AddChain(chains.NewGenerateAdapterChain())
 	g.AddChain(chains.NewGenerateServicesChain())
 	g.AddChain(chains.NewGenerateUseCaseChain())
 	g.AddChain(chains.NewGenerateCodeChain())

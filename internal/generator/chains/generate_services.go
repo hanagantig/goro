@@ -5,7 +5,6 @@ import (
 	"github.com/hanagantig/goro/pkg/afero"
 	"github.com/iancoleman/strcase"
 	"os"
-	"strings"
 )
 
 type generateServicesChain struct{}
@@ -39,9 +38,8 @@ func (g *generateServicesChain) Apply(fs *afero.Afero, data entity.Config) (*afe
 		return nil, err
 	}
 
-	for svcName, svc := range data.Services {
-		pkgName := strings.ToLower(svcName.String())
-		path := servicePath + "/" + pkgName
+	for _, svc := range data.Services {
+		path := servicePath + "/" + svc.GetPkgName()
 		if _, err := fs.Stat(path); os.IsNotExist(err) {
 			err = fs.Mkdir(path, os.ModeDir)
 			if err != nil {
@@ -64,7 +62,7 @@ func (g *generateServicesChain) Apply(fs *afero.Afero, data entity.Config) (*afe
 				PkgName    string
 				MethodName string
 			}{
-				PkgName:    svc.GetPackageName(),
+				PkgName:    svc.GetPkgName(),
 				MethodName: method,
 			}
 			generatedMethod, err := generate(path, methodTmpl, methodData)

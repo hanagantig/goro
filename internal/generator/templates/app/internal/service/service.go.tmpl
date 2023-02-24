@@ -1,4 +1,4 @@
-package {{$.GetPackageName}}
+package {{$.GetPkgName}}
 
 {{if .Deps}}
     {{range $val := .Deps}}
@@ -16,7 +16,7 @@ type Service struct {
     {{end}}
 }
 
-func New{{toCamelCase $.GetPackageName}}({{if .Deps}}{{range $val := .Deps}}{{$val}} {{$val}}{{end}}{{end}}) *Service {
+func {{$.GetConstructorName}}({{if .Deps}}{{range $val := .Deps}}{{$val}} {{$val}}{{end}}{{end}}) *Service {
 	return &Service{
 		{{if .Deps}}
 		    {{range $val := .Deps}}

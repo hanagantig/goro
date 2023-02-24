@@ -9,16 +9,10 @@ import (
 	"strings"
 )
 
-var storagePackages = map[string]string{
-	"mysql":  "\"database/sql\"",
-	"mysqlx": "\"github.com/jmoiron/sqlx\"",
-}
-
 type DependencyName string
 type ServiceName string
 type AdapterName string
 type StorageName string
-type StorageList map[StorageName]Storage
 
 func (s StorageName) String() string {
 	return string(s)
@@ -41,8 +35,8 @@ type Config struct {
 	UseCase      UseCase                       `yaml:"use_case"`
 	Storages     []string                      `yaml:"storages"`
 	Dependencies map[DependencyName]Dependency `yaml:"dependencies"`
-	Services     map[ServiceName]Dependency    `yaml:"services"`
-	Adapters     map[AdapterName]Dependency    `yaml:"adapters"`
+	Services     []Service                     `yaml:"services"`
+	Adapters     []Adapter                     `yaml:"adapters"`
 	Chunks       []Chunk
 }
 
@@ -72,11 +66,6 @@ type App struct {
 	WorkDir string `yaml:"work_dir"`
 }
 
-type Storage struct {
-	Type       string `yaml:"type"`
-	Connection string `yaml:"connection"`
-}
-
 type Dependency struct {
 	Pkg       string   `yaml:"pkg"`
 	Type      string   `yaml:"type"`
@@ -92,10 +81,6 @@ func (d Dependency) GetPackageName() string {
 	}
 
 	return ""
-}
-
-func (s *Storage) GetPackage() string {
-	return storagePackages[s.Type]
 }
 
 func NewConfig(pathToFile string) (Config, error) {
