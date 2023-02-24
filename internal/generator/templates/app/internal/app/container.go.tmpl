@@ -3,7 +3,7 @@ package app
 import (
     {{ renderImports "storage" "definition" .Chunks }}
 
-    "{{ $.App.Module }}/{{$.UseCase.Pkg}}"
+    "{{ $.App.Module }}/internal/usecase"
 
     {{if .Services}}
         {{range .Services -}}
@@ -32,9 +32,9 @@ func NewContainer({{ renderArgs "storage" .Chunks }}) *Container {
 	}
 }
 
-func (c *Container) GetUseCase() {{ $.UseCase.Type }} {
+func (c *Container) GetUseCase() *usecase.UseCase {
 
-    return {{ $.UseCase.BuildFunc }}({{range $p := $.UseCase.Deps}} c.get{{toCamelCase $p}}(), {{end}})
+    return usecase.{{$.UseCase.GetConstructorName}}({{range $p := $.UseCase.Deps}} c.get{{toCamelCase $p}}(), {{end}})
 }
 
 {{range .Chunks}}

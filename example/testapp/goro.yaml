@@ -1,7 +1,7 @@
 app:
   name: testapp
   module: testapp
-  work_dir: "/Users/hanagantig/gorotmp"
+  work_dir: ""
 
 storages:
   - mysql
@@ -14,9 +14,6 @@ handlers:
   - amqp
 
 use_case:
-  pkg: "internal/usecase"
-  type: "*usecase.UseCase"
-  build_func: "usecase.NewUseCase"
   deps: [myService, pinPongalka]
   methods:
     - GetClients
