@@ -1,15 +1,16 @@
 package {{$.GetPkgName}}
 
 import (
-    {{ $.Storage.GetPkgNameForImport }}
+    {{ $.Storage.GetConnImportName }}
+    "{{ $.AppModule }}/internal/adapter/{{$.Storage.GetFolderName}}"
 )
 
 type Repository struct {
-	conn {{ $.Storage.GetConnectionType }}
+	{{$.Storage.GetFolderName}}.Transactor
 }
 
 func {{$.GetConstructorName}}(conn {{ $.Storage.GetConnectionType }}) *Repository {
 	return &Repository{
-		conn: conn,
+		{{$.Storage.GetFolderName}}.NewTransactor(conn),
 	}
 }

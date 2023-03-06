@@ -3,9 +3,10 @@ package config
 import "strings"
 
 type Adapter struct {
-	Name    string   `yaml:"name"`
-	Storage Storage  `yaml:"storage"`
-	Methods []string `yaml:"methods"`
+	Name      string   `yaml:"name"`
+	Storage   Storage  `yaml:"storage"`
+	Methods   []string `yaml:"methods"`
+	AppModule string
 }
 
 func (a Adapter) GetPkgName() string {

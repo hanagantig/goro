@@ -19,6 +19,7 @@ func (g *generateAdapterChain) Apply(fs *afero.Afero, data entity.Config) (*afer
 	adapterPath := "/internal/adapter"
 	repoFilePath := adapterPath + "/repository.go.tmpl"
 	methodFilePath := "/internal/adapter/method.go.tmpl"
+	transactorFilePath := "/internal/adapter/sql_transactor.go.tmpl"
 
 	repositoryTmpl, err := fs.ReadFile(repoFilePath)
 	if err != nil {
@@ -26,6 +27,11 @@ func (g *generateAdapterChain) Apply(fs *afero.Afero, data entity.Config) (*afer
 	}
 
 	methodTmpl, err := fs.ReadFile(methodFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	transactorTmpl, err := fs.ReadFile(transactorFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -40,10 +46,27 @@ func (g *generateAdapterChain) Apply(fs *afero.Afero, data entity.Config) (*afer
 		return nil, err
 	}
 
+	err = fs.Remove(transactorFilePath)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, adapter := range data.Adapters {
+		adapter.AppModule = data.App.Module
+
 		storageFolderPath := fmt.Sprintf("%s/%s", adapterPath, adapter.Storage.GetFolderName())
 		if _, err := fs.Stat(storageFolderPath); os.IsNotExist(err) {
 			err = fs.Mkdir(storageFolderPath, os.ModeDir)
+			if err != nil {
+				return nil, err
+			}
+
+			generated, err := generate(transactorFilePath, transactorTmpl, adapter)
+			if err != nil {
+				return nil, err
+			}
+
+			err = fs.WriteFile(storageFolderPath+"/transactor.go.tmpl", generated, 0644)
 			if err != nil {
 				return nil, err
 			}

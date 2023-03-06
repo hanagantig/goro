@@ -20,7 +20,7 @@ func (s Storage) GetFolderName() string {
 	return string(s) + "repo"
 }
 
-func (s Storage) GetPkgNameForImport() string {
+func (s Storage) GetConnImportName() string {
 	return storagePackages[s]
 }
 

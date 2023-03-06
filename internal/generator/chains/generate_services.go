@@ -39,6 +39,8 @@ func (g *generateServicesChain) Apply(fs *afero.Afero, data entity.Config) (*afe
 	}
 
 	for _, svc := range data.Services {
+		svc.AppModule = data.App.Module
+
 		path := servicePath + "/" + svc.GetPkgName()
 		if _, err := fs.Stat(path); os.IsNotExist(err) {
 			err = fs.Mkdir(path, os.ModeDir)

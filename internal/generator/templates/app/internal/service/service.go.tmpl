@@ -1,8 +1,13 @@
 package {{$.GetPkgName}}
 
+import (
+	"{{ $.AppModule }}/internal/service"
+)
+
 {{if .Deps}}
     {{range $val := .Deps}}
         type {{$val}} interface {
+            service.Transactor
         	// TODO: define interface to inject a service or an adapter
         }
     {{end}}
