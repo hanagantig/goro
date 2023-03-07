@@ -99,7 +99,6 @@ func (g *Generator) Generate() error {
 
 	for k, ch := range g.chains {
 		fmt.Printf("chain #%d: %s \n", k+1, ch.Name())
-		_, err = fs.ReadDir("cmd")
 
 		fs, err = ch.Apply(fs, g.config)
 		if err != nil {

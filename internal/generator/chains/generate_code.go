@@ -5,7 +5,6 @@ import (
 	entity "github.com/hanagantig/goro/internal/config"
 	"github.com/hanagantig/goro/internal/generator"
 	"github.com/hanagantig/goro/pkg/afero"
-	"github.com/iancoleman/strcase"
 	"go/format"
 	"os"
 	"strings"
@@ -16,6 +15,21 @@ type generateCodeChain struct{}
 
 func NewGenerateCodeChain() *generateCodeChain {
 	return &generateCodeChain{}
+}
+
+func generate(path string, content []byte, data interface{}) ([]byte, error) {
+	fMap := generator.FuncMap
+
+	buf := bytes.NewBuffer(nil)
+	t := template.New(path).Funcs(fMap)
+	tmpl := template.Must(t.Parse(string(content)))
+
+	err := tmpl.Execute(buf, data)
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
 
 func (g *generateCodeChain) Apply(fs *afero.Afero, data entity.Config) (*afero.Afero, error) {
@@ -33,25 +47,15 @@ func (g *generateCodeChain) Apply(fs *afero.Afero, data entity.Config) (*afero.A
 				return nil
 			}
 
-			fMap := generator.FunkMap
-			fMap["toCamelCase"] = strcase.ToCamel
-
-			buf := bytes.NewBuffer(nil)
-			t := template.New(f.Name()).Funcs(fMap)
 			content, err := fs.ReadFile(path)
-			if err != nil {
-				return err
-			}
-			tmpl := template.Must(t.Parse(string(content)))
 
-			err = tmpl.Execute(buf, data)
+			formatted, err := generate(f.Name(), content, data)
 			if err != nil {
 				return err
 			}
 
-			formatted := buf.Bytes()
 			if strings.Contains(f.Name(), ".go") {
-				formatted, err = format.Source(buf.Bytes())
+				formatted, err = format.Source(formatted)
 				if err != nil {
 					return err
 				}

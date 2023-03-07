@@ -3,18 +3,19 @@ package generator
 import (
 	"fmt"
 	entity "github.com/hanagantig/goro/internal/config"
+	"github.com/iancoleman/strcase"
 	"strings"
 	"text/template"
 )
 
-var FunkMap = template.FuncMap{
+var FuncMap = template.FuncMap{
 	"renderImports":                  RenderImports,
 	"renderDefinition":               RenderDefinitions,
 	"renderInitializationsWithError": RenderInitializationsWithError,
-	"renderDependency":               RenderDependency,
 	"renderStructPopulation":         RenderStructPopulation,
 	"renderArgs":                     RenderArgs,
 	"renderBuild":                    RenderBuild,
+	"toCamelCase":                    strcase.ToCamel,
 }
 
 func RenderImports(scope, stage string, chunks []entity.Chunk) string {

@@ -6,31 +6,18 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
+	"strings"
 )
 
-var storagePackages = map[string]string{
-	"mysql":  "\"database/sql\"",
-	"mysqlx": "\"github.com/jmoiron/sqlx\"",
-}
-
 type DependencyName string
-type StorageName string
-type StorageList map[StorageName]Storage
-
-func (s StorageName) String() string {
-	return string(s)
-}
-
-func (s DependencyName) String() string {
-	return string(s)
-}
 
 type Config struct {
-	App          App                           `yaml:"app"`
-	UseCase      UseCase                       `yaml:"use_case"`
-	Storages     []string                      `yaml:"storages"`
-	Dependencies map[DependencyName]Dependency `yaml:"dependencies"`
-	Chunks       []Chunk
+	App      App       `yaml:"app"`
+	UseCase  UseCase   `yaml:"use_case"`
+	Storages []string  `yaml:"storages"`
+	Services []Service `yaml:"services"`
+	Adapters []Adapter `yaml:"adapters"`
+	Chunks   []Chunk
 }
 
 type Chunk struct {
@@ -45,33 +32,27 @@ type Chunk struct {
 	Configs           string
 }
 
-type UseCase struct {
-	Pkg       string   `yaml:"pkg"`
-	Type      string   `yaml:"type"`
-	BuildFunc string   `yaml:"build_func"`
-	Deps      []string `yaml:"deps"`
-}
-
 type App struct {
 	Name    string `yaml:"name"`
 	Module  string `yaml:"module"`
 	WorkDir string `yaml:"work_dir"`
 }
 
-type Storage struct {
-	Type       string `yaml:"type"`
-	Connection string `yaml:"connection"`
-}
-
 type Dependency struct {
 	Pkg       string   `yaml:"pkg"`
 	Type      string   `yaml:"type"`
 	BuildFunc string   `yaml:"build_func"`
+	Methods   []string `yaml:"methods"`
 	Deps      []string `yaml:"deps"`
 }
 
-func (s *Storage) GetPackage() string {
-	return storagePackages[s.Type]
+func (d Dependency) GetPackageName() string {
+	path := strings.Split(d.Pkg, "/")
+	if len(path) > 0 {
+		return path[len(path)-1]
+	}
+
+	return ""
 }
 
 func NewConfig(pathToFile string) (Config, error) {
@@ -101,31 +82,32 @@ func (d *Config) Validate() error {
 	if d.App.Module == "" || d.App.Name == "" || d.App.WorkDir == "" {
 		return fmt.Errorf("module, name and work_dir can't be empty")
 	}
-	for depName, dep := range d.Dependencies {
-		for _, store := range d.Storages {
-			if store == depName.String() {
-				return fmt.Errorf("dependency \"%v\" has the same name with storage", depName)
-			}
-		}
-
-		for _, dpName := range dep.Deps {
-			if depName == DependencyName(dpName) {
-				return fmt.Errorf("dependency \"%v\" can't depend on self", depName)
-			}
-
-			_, okDep := d.Dependencies[DependencyName(dpName)]
-			okStore := false
-			for _, store := range d.Storages {
-				if store == dpName {
-					okStore = true
-				}
-			}
-
-			if !okDep && !okStore {
-				return fmt.Errorf("undefined dep name \"%v\" in \"%v\" dependency", dpName, depName)
-			}
-		}
-	}
+	// TODO: validate
+	//for depName, dep := range d.Dependencies {
+	//	for _, store := range d.Storages {
+	//		if store == depName.String() {
+	//			return fmt.Errorf("dependency \"%v\" has the same name with storage", depName)
+	//		}
+	//	}
+	//
+	//	for _, dpName := range dep.Deps {
+	//		if depName == DependencyName(dpName) {
+	//			return fmt.Errorf("dependency \"%v\" can't depend on self", depName)
+	//		}
+	//
+	//		_, okDep := d.Dependencies[DependencyName(dpName)]
+	//		okStore := false
+	//		for _, store := range d.Storages {
+	//			if store == dpName {
+	//				okStore = true
+	//			}
+	//		}
+	//
+	//		if !okDep && !okStore {
+	//			return fmt.Errorf("undefined dep name \"%v\" in \"%v\" dependency", dpName, depName)
+	//		}
+	//	}
+	//}
 
 	return nil
 }

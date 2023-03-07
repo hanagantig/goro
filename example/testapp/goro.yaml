@@ -8,26 +8,42 @@ storages:
   - mysqlx
   - postgres
 
-use_case:
-  pkg: "internal/usecase"
-  type: "*usecase.UseCase"
-  build_func: "usecase.NewUseCase"
-  deps: [myService]
-
 handlers:
   - http
   - grpc
   - amqp
 
-dependencies:
-  myRepo:
-    pkg: "internal/adapter/repository"
-    type: "*repository.MyRepo"
-    build_func: "repository.NewMyRepo"
-    deps: [mysql, postgres]
+use_case:
+  deps: [myService, pinPongalka]
+  methods:
+    - GetClients
+    - SignIn
+    - SignUp
 
-  myService:
-    pkg: "internal/service/pongservice"
-    type: "*pongservice.MyService"
-    build_func: "pongservice.NewMyService"
+services:
+  -
+    name: myService
+    methods: ["getList", "getByFilter"]
     deps: [ myRepo ]
+
+  -
+    name: pinPongalka
+    methods: ["getPong"]
+    deps: [ myRepo ]
+
+adapters:
+  -
+    name: MyRepo
+    storage: "mysql"
+    methods:
+      - GetOne
+      - GetAll
+      - Save
+      - Update
+
+  -
+    name: ClientRepo
+    storage: "mysqlx"
+    methods:
+      - GitByDate
+      - GetByID

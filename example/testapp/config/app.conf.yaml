@@ -1,0 +1,9 @@
+http:
+  port: 8095
+  host: "localhost"
+  read_timeout: "3s"
+  write_timeout: "3s"
+
+main_db:
+  port: 3306
+  host: "localhost"

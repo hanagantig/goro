@@ -1,0 +1,16 @@
+package {{$.GetPkgName}}
+
+import (
+    {{ $.Storage.GetConnImportName }}
+    "{{ $.AppModule }}/internal/adapter/{{$.Storage.GetFolderName}}"
+)
+
+type Repository struct {
+	{{$.Storage.GetFolderName}}.Transactor
+}
+
+func {{$.GetConstructorName}}(conn {{ $.Storage.GetConnectionType }}) *Repository {
+	return &Repository{
+		{{$.Storage.GetFolderName}}.NewTransactor(conn),
+	}
+}

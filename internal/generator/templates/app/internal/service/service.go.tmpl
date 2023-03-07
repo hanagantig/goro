@@ -1,0 +1,32 @@
+package {{$.GetPkgName}}
+
+import (
+	"{{ $.AppModule }}/internal/service"
+)
+
+{{if .Deps}}
+    {{range $val := .Deps}}
+        type {{$val}} interface {
+            service.Transactor
+        	// TODO: define interface to inject a service or an adapter
+        }
+    {{end}}
+{{end}}
+
+type Service struct {
+	{{if .Deps}}
+        {{range $val := .Deps}}
+            {{$val}} {{$val}}
+        {{end}}
+    {{end}}
+}
+
+func {{$.GetConstructorName}}({{if .Deps}}{{range $val := .Deps}}{{$val}} {{$val}}{{end}}{{end}}) *Service {
+	return &Service{
+		{{if .Deps}}
+		    {{range $val := .Deps}}
+                {{$val}}: {{$val}},
+            {{end}}
+        {{end}}
+	}
+}
