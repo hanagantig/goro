@@ -1,10 +1,10 @@
-package pinpongalka
+package pinpong
 
 import (
 	"context"
 )
 
-func (s *Service) GetPong(ctx context.Context) {
+func (s *Service) Pong(ctx context.Context) {
 
 	// TODO: put your business logic here
 	panic("implement me")

@@ -7,7 +7,7 @@ import (
 	"testapp/internal/usecase"
 
 	"testapp/internal/service/myservice"
-	"testapp/internal/service/pinpongalka"
+	"testapp/internal/service/pinpong"
 
 	"testapp/internal/adapter/mysqlrepo/myrepo"
 	"testapp/internal/adapter/mysqlxrepo/clientrepo"
@@ -34,7 +34,7 @@ func NewContainer(mysqlConnect *sql.DB, mysqlxConn *sqlx.DB, postgresConn *sql.D
 
 func (c *Container) GetUseCase() *usecase.UseCase {
 
-	return usecase.NewUseCase(c.getMyService(), c.getPinPongalka())
+	return usecase.NewUseCase(c.getMyService())
 }
 
 func (c *Container) getMysql() *sql.DB {
@@ -54,9 +54,9 @@ func (c *Container) getMyService() *myservice.Service {
 	return myservice.NewService(c.getMyRepo())
 }
 
-func (c *Container) getPinPongalka() *pinpongalka.Service {
+func (c *Container) getPinPong() *pinpong.Service {
 
-	return pinpongalka.NewService(c.getMyRepo())
+	return pinpong.NewService(c.getMyRepo())
 }
 
 func (c *Container) getMyRepo() *myrepo.Repository {
