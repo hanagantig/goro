@@ -17,7 +17,7 @@ func NewUpdateFilesChain() *updateFilesChain {
 }
 
 func isRegenerated(name string) bool {
-	return strings.Contains(name, "internal/app/container.go")
+	return strings.Contains(name, "internal/app/container.go") || strings.Contains(name, "internal/usecase")
 }
 
 func (g *updateFilesChain) Apply(fs *afero.Afero, data entity.Config) (*afero.Afero, error) {
