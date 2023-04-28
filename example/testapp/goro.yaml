@@ -14,11 +14,12 @@ handlers:
   - amqp
 
 use_case:
-  deps: [myService, pinPongalka]
+  deps: [myService]
   methods:
     - GetClients
     - SignIn
     - SignUp
+    - Pong
 
 services:
   -
@@ -27,8 +28,8 @@ services:
     deps: [ myRepo ]
 
   -
-    name: pinPongalka
-    methods: ["getPong"]
+    name: pinPong
+    methods: ["Pong"]
     deps: [ myRepo ]
 
 adapters:

@@ -1,4 +1,4 @@
-package pinpongalka
+package pinpong
 
 import (
 	"testapp/internal/service"

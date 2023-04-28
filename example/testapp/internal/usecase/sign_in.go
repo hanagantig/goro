@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-func (u *UseCase) SignIn(ctx context.Context) {
+func (u *UseCase) SignIn(ctx context.Context) (interface{}, error) {
 	// TODO: put your service call logic here
-	panic("implement me")
+	return "implement UseCase method SignIn", nil
 }
