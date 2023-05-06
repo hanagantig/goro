@@ -9,12 +9,18 @@ type myService interface {
 	// TODO: define interface to inject a service
 }
 
-type UseCase struct {
-	myService myService
+type pingPong interface {
+	// TODO: define interface to inject a service
 }
 
-func NewUseCase(myService myService) *UseCase {
+type UseCase struct {
+	myService myService
+	pingPong  pingPong
+}
+
+func NewUseCase(myService myService, pingPong pingPong) *UseCase {
 	return &UseCase{
 		myService: myService,
+		pingPong:  pingPong,
 	}
 }

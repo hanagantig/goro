@@ -16,6 +16,8 @@ var FuncMap = template.FuncMap{
 	"renderArgs":                     RenderArgs,
 	"renderBuild":                    RenderBuild,
 	"toCamelCase":                    strcase.ToCamel,
+	"toPrivateName":                  ToPrivateName,
+	"toPublicName":                   ToPublicName,
 }
 
 func RenderImports(scope, stage string, chunks []entity.Chunk) string {
@@ -83,4 +85,12 @@ func RenderStructPopulation(scope string, chunks []entity.Chunk) string {
 	}
 
 	return res.String()
+}
+
+func ToPrivateName(name string) string {
+	return strings.ToLower(string(name[0])) + name[1:]
+}
+
+func ToPublicName(name string) string {
+	return strings.ToUpper(string(name[0])) + name[1:]
 }

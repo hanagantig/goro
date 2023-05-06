@@ -1,4 +1,4 @@
-package pinpong
+package pingpong
 
 import (
 	"context"

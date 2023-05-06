@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-func (u *UseCase) {{toCamelCase $}}(ctx context.Context) (interface{}, error) {
+func (u *UseCase) {{toPublicName (toCamelCase $)}}(ctx context.Context) (interface{}, error) {
     // TODO: put your service call logic here
     return "implement UseCase method {{toCamelCase $}}", nil
 }
