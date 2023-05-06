@@ -7,7 +7,7 @@ package usecase
 
 {{if .Deps}}
     {{range $val := .Deps}}
-        type {{$val}} interface {
+        type {{toPrivateName $val}} interface {
         	// TODO: define interface to inject a service
         }
     {{end}}
@@ -15,14 +15,14 @@ package usecase
 
 type UseCase struct {
     {{if .Deps}}
-        {{range $val := .Deps}}{{$val}} {{$val}}
+        {{range $val := .Deps}}{{toPrivateName $val}} {{toPrivateName $val}}
         {{end}}
     {{end}}
 }
 
-func NewUseCase({{if .Deps}}{{range $val := .Deps}}{{$val}} {{$val}},{{end}}{{end}}) *UseCase {
+func NewUseCase({{if .Deps}}{{range $val := .Deps}}{{toPrivateName $val}} {{toPrivateName $val}},{{end}}{{end}}) *UseCase {
 	return &UseCase{ {{if .Deps}}
-            {{range $val := .Deps}}{{$val}}: {{$val}},
+            {{range $val := .Deps}}{{toPrivateName $val}}: {{toPrivateName $val}},
             {{end}}
         {{end}}
 	}

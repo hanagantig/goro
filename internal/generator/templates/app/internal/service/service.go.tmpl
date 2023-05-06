@@ -11,7 +11,7 @@ import (
 
 {{if .Deps}}
     {{range $val := .Deps}}
-        type {{$val}} interface {
+        type {{toPrivateName $val}} interface {
             service.Transactor
         	// TODO: define interface to inject a service or an adapter
         }
@@ -21,16 +21,16 @@ import (
 type Service struct {
 	{{if .Deps}}
         {{range $val := .Deps}}
-            {{$val}} {{$val}}
+            {{toPrivateName $val}} {{toPrivateName $val}}
         {{end}}
     {{end}}
 }
 
-func {{$.GetConstructorName}}({{if .Deps}}{{range $val := .Deps}}{{$val}} {{$val}}{{end}}{{end}}) *Service {
+func {{$.GetConstructorName}}({{if .Deps}}{{range $val := .Deps}}{{toPrivateName $val}} {{toPrivateName $val}}{{end}}{{end}}) *Service {
 	return &Service{
 		{{if .Deps}}
 		    {{range $val := .Deps}}
-                {{$val}}: {{$val}},
+                {{toPrivateName $val}}: {{toPrivateName $val}},
             {{end}}
         {{end}}
 	}

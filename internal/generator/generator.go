@@ -75,7 +75,7 @@ func (g *Generator) getTemplateFS() (*afero.Afero, error) {
 
 func (g *Generator) loadChunks() error {
 	for _, name := range g.config.Storages {
-		ch, ok := supportedChunks[name]
+		ch, ok := supportedChunks[name.String()]
 		if !ok {
 			return fmt.Errorf("%w: %v", UnsupportedChunkErr, name)
 		}

@@ -12,11 +12,11 @@ import (
 type DependencyName string
 
 type Config struct {
-	App      App       `yaml:"app"`
-	UseCase  UseCase   `yaml:"use_case"`
-	Storages []string  `yaml:"storages"`
-	Services []Service `yaml:"services"`
-	Adapters []Adapter `yaml:"adapters"`
+	App      App      `yaml:"app"`
+	UseCase  UseCase  `yaml:"use_case"`
+	Storages Storages `yaml:"storages"`
+	Services Services `yaml:"services"`
+	Adapters Adapters `yaml:"adapters"`
 	Chunks   []Chunk
 }
 
@@ -78,55 +78,21 @@ func LoadDataFromYaml(pathToFile string) (Config, error) {
 	return data, err
 }
 
-func (d *Config) Validate() error {
-	if d.App.Module == "" || d.App.Name == "" || d.App.WorkDir == "" {
-		return fmt.Errorf("module, name and work_dir can't be empty")
-	}
-	// TODO: validate
-	//for depName, dep := range d.Dependencies {
-	//	for _, store := range d.Storages {
-	//		if store == depName.String() {
-	//			return fmt.Errorf("dependency \"%v\" has the same name with storage", depName)
-	//		}
-	//	}
-	//
-	//	for _, dpName := range dep.Deps {
-	//		if depName == DependencyName(dpName) {
-	//			return fmt.Errorf("dependency \"%v\" can't depend on self", depName)
-	//		}
-	//
-	//		_, okDep := d.Dependencies[DependencyName(dpName)]
-	//		okStore := false
-	//		for _, store := range d.Storages {
-	//			if store == dpName {
-	//				okStore = true
-	//			}
-	//		}
-	//
-	//		if !okDep && !okStore {
-	//			return fmt.Errorf("undefined dep name \"%v\" in \"%v\" dependency", dpName, depName)
-	//		}
-	//	}
-	//}
-
-	return nil
-}
-
-func (d *Config) AskAndSetName() error {
-	if d.App.Name != "" {
+func (c *Config) AskAndSetName() error {
+	if c.App.Name != "" {
 		return nil
 	}
 
-	name, err := d.askName()
+	name, err := c.askName()
 	if err != nil {
 		return err
 	}
 
-	d.App.Name = name
+	c.App.Name = name
 	return nil
 }
 
-func (d *Config) askName() (string, error) {
+func (c *Config) askName() (string, error) {
 	return (&promptui.Prompt{
 		Label: "Enter an app name",
 		Validate: func(s string) error {
@@ -138,12 +104,12 @@ func (d *Config) askName() (string, error) {
 	}).Run()
 }
 
-func (d *Config) AskAndSetWorkDir() error {
-	if d.App.WorkDir != "" {
+func (c *Config) AskAndSetWorkDir() error {
+	if c.App.WorkDir != "" {
 		return nil
 	}
 
-	wd, err := d.askWorkDir()
+	wd, err := c.askWorkDir()
 	if err != nil {
 		return err
 	}
@@ -154,11 +120,11 @@ func (d *Config) AskAndSetWorkDir() error {
 			return err
 		}
 	}
-	d.App.WorkDir = wd
+	c.App.WorkDir = wd
 	return nil
 }
 
-func (d *Config) askWorkDir() (string, error) {
+func (c *Config) askWorkDir() (string, error) {
 	return (&promptui.Prompt{
 		Label: "Enter an app work dir or leave it empty to use current directory",
 		// TODO: validate path

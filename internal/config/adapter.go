@@ -9,10 +9,21 @@ type Adapter struct {
 	AppModule string
 }
 
+type Adapters []Adapter
+
 func (a Adapter) GetPkgName() string {
 	return strings.ToLower(a.Name)
 }
 
 func (a Adapter) GetConstructorName() string {
 	return "NewRepository"
+}
+
+func (a Adapters) GetMap() map[string]struct{} {
+	res := make(map[string]struct{}, 0)
+	for _, ad := range a {
+		res[ad.Name] = struct{}{}
+	}
+
+	return res
 }

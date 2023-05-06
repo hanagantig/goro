@@ -11,6 +11,16 @@ var connectionsType = map[Storage]string{
 }
 
 type Storage string
+type Storages []Storage
+
+func (s Storages) GetMap() map[Storage]struct{} {
+	res := make(map[Storage]struct{}, 0)
+	for _, st := range s {
+		res[st] = struct{}{}
+	}
+
+	return res
+}
 
 func (s Storage) String() string {
 	return string(s)

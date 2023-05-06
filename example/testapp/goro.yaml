@@ -14,7 +14,9 @@ handlers:
   - amqp
 
 use_case:
-  deps: [myService]
+  deps:
+    - MyService
+    - PingPong
   methods:
     - GetClients
     - SignIn
@@ -22,29 +24,30 @@ use_case:
     - Pong
 
 services:
-  -
-    name: myService
-    methods: ["getList", "getByFilter"]
-    deps: [ myRepo ]
+  - name: MyService
+    methods:
+      - GetList
+      - GetByFilter
+    deps:
+      - MyRepo
 
-  -
-    name: pinPong
-    methods: ["Pong"]
-    deps: [ myRepo ]
+  - name: PingPong
+    methods:
+      - Pong
+    deps:
+      - MyRepo
 
 adapters:
-  -
-    name: MyRepo
-    storage: "mysql"
+  - name: MyRepo
+    storage: mysql
     methods:
       - GetOne
       - GetAll
       - Save
       - Update
 
-  -
-    name: ClientRepo
-    storage: "mysqlx"
+  - name: ClientRepo
+    storage: mysqlx
     methods:
       - GitByDate
       - GetByID
