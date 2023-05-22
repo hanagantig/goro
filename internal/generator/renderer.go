@@ -18,6 +18,7 @@ var FuncMap = template.FuncMap{
 	"toCamelCase":                    strcase.ToCamel,
 	"toPrivateName":                  ToPrivateName,
 	"toPublicName":                   ToPublicName,
+	"contains":                       strings.Contains,
 }
 
 func RenderImports(scope, stage string, chunks []entity.Chunk) string {

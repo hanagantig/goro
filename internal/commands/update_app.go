@@ -37,6 +37,7 @@ func UpdateApp(configPath string) {
 	g.AddChain(chains.NewGenerateCodeChain())
 	g.AddChain(chains.NewFitFileExtensionChain())
 
+	g.AddChain(chains.NewSyncUseCaseChain())
 	g.AddChain(chains.NewSyncServicesChain())
 	g.AddChain(chains.NewSyncAdaptersChain())
 	g.AddChain(chains.NewUpdateFilesChain())
