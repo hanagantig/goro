@@ -1,6 +1,6 @@
 <p align="center">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="assets/img/goro.logo-dark.svg">
+      <source media="(prefers-color-scheme: dark)" srcset="assets/img/goro.logo-dark.png">
       <source media="(prefers-color-scheme: light)" srcset="assets/img/goro.logo.svg">
       <img alt="Goro" title="Goro" width="200" src="assets/img/goro.logo.svg">
     </picture>
