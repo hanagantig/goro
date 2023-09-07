@@ -36,6 +36,12 @@ go run . http --config=./config/app.conf.yaml
 Open in your browser [http://localhost:8095/api/v1/ping](http://localhost:8095/api/v1/ping)
 And you can see `pong` for your `ping`.
 
+## Youtube presentation
+
+You can get more details from the Youtube video (in Russian):
+
+[Архитектура Go проекта на практике](https://www.youtube.com/watch?v=hDwqFRUuykQ)
+
 # Layout
 
 ![Layout schema](assets/img/layout.png?raw=true "layout")
