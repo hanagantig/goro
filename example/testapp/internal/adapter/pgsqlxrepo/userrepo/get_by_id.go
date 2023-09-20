@@ -1,10 +1,10 @@
-package myrepo
+package userrepo
 
 import (
 	"context"
 )
 
-func (r *Repository) Update(ctx context.Context) {
+func (r *Repository) GetByID(ctx context.Context) {
 	// TODO: put your repository logic here
 	panic("implement me")
 }

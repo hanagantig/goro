@@ -31,9 +31,9 @@ type App struct {
 	//hc     health.Checker
 	//hcOnce *sync.Once
 
-	mysql    *sql.DB
-	mysqlx   *sqlx.DB
-	postgres *sql.DB
+	mysql  *sql.DB
+	mysqlx *sqlx.DB
+	pgsqlx *sqlx.DB
 
 	logger Logger
 }
@@ -68,14 +68,14 @@ func NewApp(configPath string) (*App, error) {
 		return nil, err
 	}
 	app.mysqlx = mysqlxConn
-	postgresConn, err := app.newPostgresConnect(cfg.MainDB)
+	pgSqlxConn, err := app.newPgSqlxConnect(cfg.MainDB)
 	if err != nil {
 		return nil, err
 	}
-	app.postgres = postgresConn
+	app.pgsqlx = pgSqlxConn
 
 	//goro:init dependencies
-	app.c = NewContainer(app.mysql, app.mysqlx, app.postgres)
+	app.c = NewContainer(app.mysql, app.mysqlx, app.pgsqlx)
 
 	return app, nil
 }

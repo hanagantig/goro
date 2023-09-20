@@ -6,7 +6,7 @@ app:
 storages:
   - mysql
   - mysqlx
-  - postgres
+  - pgsqlx
 
 handlers:
   - http
@@ -44,10 +44,14 @@ adapters:
       - GetOne
       - GetAll
       - Save
-      - Update
 
   - name: ClientRepo
     storage: mysqlx
     methods:
       - GitByDate
+      - GetByID
+
+  - name: UserRepo
+    storage: pgsqlx
+    methods:
       - GetByID

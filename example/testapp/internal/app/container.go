@@ -16,22 +16,23 @@ import (
 
 	"testapp/internal/adapter/mysqlrepo/myrepo"
 	"testapp/internal/adapter/mysqlxrepo/clientrepo"
+	"testapp/internal/adapter/pgsqlxrepo/userrepo"
 )
 
 type Container struct {
-	mysql    *sql.DB
-	mysqlx   *sqlx.DB
-	postgres *sql.DB
+	mysql  *sql.DB
+	mysqlx *sqlx.DB
+	pgsqlx *sqlx.DB
 
 	deps map[string]interface{}
 }
 
-func NewContainer(mysqlConnect *sql.DB, mysqlxConn *sqlx.DB, postgresConn *sql.DB) *Container {
+func NewContainer(mysqlConnect *sql.DB, mysqlxConn *sqlx.DB, pgSqlxConn *sqlx.DB) *Container {
 
 	return &Container{
-		mysql:    mysqlConnect,
-		mysqlx:   mysqlxConn,
-		postgres: postgresConn,
+		mysql:  mysqlConnect,
+		mysqlx: mysqlxConn,
+		pgsqlx: pgSqlxConn,
 
 		deps: make(map[string]interface{}),
 	}
@@ -50,8 +51,8 @@ func (c *Container) getMysqlx() *sqlx.DB {
 	return c.mysqlx
 }
 
-func (c *Container) getPostgres() *sql.DB {
-	return c.postgres
+func (c *Container) getPgsqlx() *sqlx.DB {
+	return c.pgsqlx
 }
 
 func (c *Container) getMyService() *myservice.Service {
@@ -72,4 +73,9 @@ func (c *Container) getMyRepo() *myrepo.Repository {
 func (c *Container) getClientRepo() *clientrepo.Repository {
 
 	return clientrepo.NewRepository(c.getMysqlx())
+}
+
+func (c *Container) getUserRepo() *userrepo.Repository {
+
+	return userrepo.NewRepository(c.getPgsqlx())
 }

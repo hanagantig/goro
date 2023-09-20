@@ -20,7 +20,7 @@ func NewMySQLChunk() config.Chunk {
 		ArgName:           "mysqlConnect",
 		ReturnType:        "*sql.DB",
 		DefinitionImports: "\"database/sql\"",
-		BuildImports:      "\"database/sql\"",
+		BuildImports:      "_ \"github.com/go-sql-driver/mysql\"\n\"database/sql\"\n\"net/url\"\n\"strconv\"\n\"strings\"",
 		InitFunc:          "newMySQLConnect",
 		Build:             buildTmpl,
 		Configs:           "mysql configs",
