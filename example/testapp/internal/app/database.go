@@ -9,14 +9,12 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
-	"testapp/internal/config"
-
+	_ "github.com/lib/pq"
 	"net/url"
 	"strconv"
 	"strings"
+	"testapp/internal/config"
 )
 
 func (a *App) newMySQLConnect(cfg config.SQLConfig) (*sql.DB, error) {
@@ -113,51 +111,24 @@ func (a *App) newMySQLxConnect(cfg config.SQLConfig) (*sqlx.DB, error) {
 	return db, nil
 }
 
-func (a *App) newPostgresConnect(cfg config.SQLConfig) (*sql.DB, error) {
+func (a *App) newPgSqlxConnect(cfg config.SQLConfig) (*sqlx.DB, error) {
 	builder := strings.Builder{}
-	builder.WriteString(cfg.User)
-	builder.WriteByte(':')
-	builder.WriteString(cfg.Password)
-	builder.WriteString("@tcp(")
-	builder.WriteString(fmt.Sprintf("%s:%s", cfg.Host, cfg.Port))
-	builder.WriteString(")/")
-	builder.WriteString(cfg.DBName)
+	builder.WriteString(fmt.Sprintf("host=%s port=%s ", cfg.Host, cfg.Port))
+	builder.WriteString(fmt.Sprintf("user=%s password=%s ", cfg.User, cfg.Password))
+	builder.WriteString(fmt.Sprintf("dbname=%s ", cfg.DBName))
+	builder.WriteString(fmt.Sprintf("timezone=%s ", cfg.Timezone))
+	builder.WriteString("sslmode=disable ")
 
-	builder.WriteString("?timeout=")
-	builder.WriteString(cfg.Timeout.String())
-	builder.WriteString("&readTimeout=")
-	builder.WriteString(cfg.ReadTimeout.String())
-	builder.WriteString("&writeTimeout=")
-	builder.WriteString(cfg.WriteTimeout.String())
-	builder.WriteString("&interpolateParams=")
-	builder.WriteString(strconv.FormatBool(cfg.InterpolateParams))
-	if cfg.Charset != "" {
-		builder.WriteString("&charset=")
-		builder.WriteString(cfg.Charset)
-	}
-	builder.WriteString("&parseTime=")
-	builder.WriteString(strconv.FormatBool(cfg.ParseTime))
-	if cfg.Collation != "" {
-		builder.WriteString("&collation=")
-		builder.WriteString(cfg.Collation)
-	}
+	params := builder.String()
 
-	if cfg.Timezone != "" {
-		builder.WriteString("&loc=")
-		builder.WriteString(url.QueryEscape(cfg.Timezone))
-	}
-	dsn := builder.String()
-
-	pgxCfg, err := pgx.ParseConfig(dsn)
+	db, err := sqlx.Open("postgres", params)
 	if err != nil {
 		return nil, err
 	}
-
-	db := stdlib.OpenDB(*pgxCfg)
 
 	db.SetConnMaxLifetime(cfg.ConnMaxLifetime)
 	db.SetMaxOpenConns(cfg.MaxOpenConns)
 	db.SetMaxIdleConns(cfg.MaxIdleConns)
 
-	return db, nil
+	return db, err
 }

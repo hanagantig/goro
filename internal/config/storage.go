@@ -3,11 +3,13 @@ package config
 var storagePackages = map[Storage]string{
 	"mysql":  "\"database/sql\"",
 	"mysqlx": "\"github.com/jmoiron/sqlx\"",
+	"pgsqlx": "\"github.com/jmoiron/sqlx\"",
 }
 
 var connectionsType = map[Storage]string{
 	"mysql":  "*sql.DB",
 	"mysqlx": "*sqlx.DB",
+	"pgsqlx": "*sqlx.DB",
 }
 
 type Storage string

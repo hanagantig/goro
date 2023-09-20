@@ -8,11 +8,7 @@ package app
 import (
 	"{{ .App.Module }}/internal/config"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
 	{{ renderImports "storage" "build" .Chunks }}
-	"net/url"
-	"strconv"
-	"strings"
 )
 
 {{ renderBuild "storage" .Chunks }}

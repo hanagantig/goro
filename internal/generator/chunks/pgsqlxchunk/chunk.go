@@ -1,4 +1,4 @@
-package mysqlxchunk
+package pgsqlxchunk
 
 import (
 	_ "embed"
@@ -8,19 +8,19 @@ import (
 //go:embed build.tpl
 var buildTmpl string
 
-const name = "mysqlx"
-const initName = "mysqlxConn"
+const name = "pgsqlx"
+const initName = "pgSqlxConn"
 
-func NewMySQLxChunk() config.Chunk {
+func NewPostgresChunk() config.Chunk {
 	return config.Chunk{
 		Name:              name,
 		Scope:             "storage",
 		ArgName:           initName,
 		ReturnType:        "*sqlx.DB",
 		DefinitionImports: "\"github.com/jmoiron/sqlx\"",
-		BuildImports:      "_ \"github.com/go-sql-driver/mysql\"\n\"github.com/jmoiron/sqlx\"\n\"net/url\"\n\"strconv\"\n\"strings\"",
-		InitFunc:          "newMySQLxConnect",
+		BuildImports:      "_ \"github.com/lib/pq\"\n\"github.com/jmoiron/sqlx\"\n\"strings\"",
+		InitFunc:          "newPgSqlxConnect",
 		Build:             buildTmpl,
-		Configs:           "mysqlx configs",
+		Configs:           "pgSqlx configs",
 	}
 }

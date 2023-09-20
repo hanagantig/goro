@@ -60,7 +60,7 @@ func NewConfig(filePath string) (Config, error) {
 		return conf, err
 	}
 
-	viper.SetDefault("app.name", "dobby")
+	viper.SetDefault("app.name", "testapp")
 	viper.SetDefault("app.env", "dev")
 	viper.SetDefault("app.version", "v1")
 	viper.SetDefault("http.read_timeout", "1s")
