@@ -19,7 +19,10 @@ type Transactor struct {
 }
 
 func NewTransactor(c *sqlx.DB) Transactor {
-	return Transactor{conn: c}
+	return Transactor{
+		conn:  c,
+		wraps: make(map[context.Context][]func(ctx context.Context) error),
+	}
 }
 
 func (t *Transactor) NewTxContext(ctx context.Context) context.Context {
