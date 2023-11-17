@@ -8,6 +8,11 @@ import (
 	"testapp/internal/service"
 )
 
+type bankApi interface {
+
+	// TODO: define interface to inject a service or an adapter
+}
+
 type myRepo interface {
 	service.Transactor
 
@@ -15,11 +20,15 @@ type myRepo interface {
 }
 
 type Service struct {
+	bankApi bankApi
+
 	myRepo myRepo
 }
 
-func NewService(myRepo myRepo) *Service {
+func NewService(bankApi bankApi, myRepo myRepo) *Service {
 	return &Service{
+
+		bankApi: bankApi,
 
 		myRepo: myRepo,
 	}

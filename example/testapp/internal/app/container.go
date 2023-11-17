@@ -8,31 +8,38 @@ package app
 import (
 	"database/sql"
 	"github.com/jmoiron/sqlx"
+	"net/http"
 
 	"testapp/internal/usecase"
 
+	"testapp/internal/service/clientservice"
 	"testapp/internal/service/myservice"
 	"testapp/internal/service/pingpong"
+	"testapp/internal/service/productservice"
 
+	"testapp/internal/adapter/httprepo/bankapi"
+	"testapp/internal/adapter/httprepo/productapi"
 	"testapp/internal/adapter/mysqlrepo/myrepo"
 	"testapp/internal/adapter/mysqlxrepo/clientrepo"
-	"testapp/internal/adapter/pgsqlxrepo/userrepo"
+	"testapp/internal/adapter/pgsqlxrepo/ordersrepo"
 )
 
 type Container struct {
-	mysql  *sql.DB
-	mysqlx *sqlx.DB
-	pgsqlx *sqlx.DB
+	mysql      *sql.DB
+	mysqlx     *sqlx.DB
+	pgsqlx     *sqlx.DB
+	httpClient *http.Client
 
 	deps map[string]interface{}
 }
 
-func NewContainer(mysqlConnect *sql.DB, mysqlxConn *sqlx.DB, pgSqlxConn *sqlx.DB) *Container {
+func NewContainer(mysqlConnect *sql.DB, mysqlxConn *sqlx.DB, pgSqlxConn *sqlx.DB, httpClient *http.Client) *Container {
 
 	return &Container{
-		mysql:  mysqlConnect,
-		mysqlx: mysqlxConn,
-		pgsqlx: pgSqlxConn,
+		mysql:      mysqlConnect,
+		mysqlx:     mysqlxConn,
+		pgsqlx:     pgSqlxConn,
+		httpClient: httpClient,
 
 		deps: make(map[string]interface{}),
 	}
@@ -40,7 +47,7 @@ func NewContainer(mysqlConnect *sql.DB, mysqlxConn *sqlx.DB, pgSqlxConn *sqlx.DB
 
 func (c *Container) GetUseCase() *usecase.UseCase {
 
-	return usecase.NewUseCase(c.getMyService(), c.getPingPong())
+	return usecase.NewUseCase(c.getMyService(), c.getPingPong(), c.getClientService())
 }
 
 func (c *Container) getMysql() *sql.DB {
@@ -55,14 +62,28 @@ func (c *Container) getPgsqlx() *sqlx.DB {
 	return c.pgsqlx
 }
 
+func (c *Container) getHttpClient() *http.Client {
+	return c.httpClient
+}
+
 func (c *Container) getMyService() *myservice.Service {
 
-	return myservice.NewService(c.getMyRepo())
+	return myservice.NewService(c.getBankApi(), c.getMyRepo())
+}
+
+func (c *Container) getProductService() *productservice.Service {
+
+	return productservice.NewService(c.getProductApi())
+}
+
+func (c *Container) getClientService() *clientservice.Service {
+
+	return clientservice.NewService(c.getClientRepo())
 }
 
 func (c *Container) getPingPong() *pingpong.Service {
 
-	return pingpong.NewService(c.getMyRepo())
+	return pingpong.NewService(c.getMyRepo(), c.getOrdersRepo())
 }
 
 func (c *Container) getMyRepo() *myrepo.Repository {
@@ -75,7 +96,17 @@ func (c *Container) getClientRepo() *clientrepo.Repository {
 	return clientrepo.NewRepository(c.getMysqlx())
 }
 
-func (c *Container) getUserRepo() *userrepo.Repository {
+func (c *Container) getOrdersRepo() *ordersrepo.Repository {
 
-	return userrepo.NewRepository(c.getPgsqlx())
+	return ordersrepo.NewRepository(c.getPgsqlx())
+}
+
+func (c *Container) getBankApi() *bankapi.Repository {
+
+	return bankapi.NewRepository(c.getHttpClient())
+}
+
+func (c *Container) getProductApi() *productapi.Repository {
+
+	return productapi.NewRepository(c.getHttpClient())
 }

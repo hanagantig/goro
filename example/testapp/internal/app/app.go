@@ -9,6 +9,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/jmoiron/sqlx"
+	"net/http"
 	"sync"
 
 	"go.uber.org/zap/zapcore"
@@ -31,9 +32,10 @@ type App struct {
 	//hc     health.Checker
 	//hcOnce *sync.Once
 
-	mysql  *sql.DB
-	mysqlx *sqlx.DB
-	pgsqlx *sqlx.DB
+	mysql      *sql.DB
+	mysqlx     *sqlx.DB
+	pgsqlx     *sqlx.DB
+	httpClient *http.Client
 
 	logger Logger
 }
@@ -63,19 +65,23 @@ func NewApp(configPath string) (*App, error) {
 		return nil, err
 	}
 	app.mysql = mysqlConnect
+
 	mysqlxConn, err := app.newMySQLxConnect(cfg.MainDB)
 	if err != nil {
 		return nil, err
 	}
 	app.mysqlx = mysqlxConn
+
 	pgSqlxConn, err := app.newPgSqlxConnect(cfg.MainDB)
 	if err != nil {
 		return nil, err
 	}
 	app.pgsqlx = pgSqlxConn
 
+	app.httpClient = app.newHttpClient()
+
 	//goro:init dependencies
-	app.c = NewContainer(app.mysql, app.mysqlx, app.pgsqlx)
+	app.c = NewContainer(app.mysql, app.mysqlx, app.pgsqlx, app.httpClient)
 
 	return app, nil
 }

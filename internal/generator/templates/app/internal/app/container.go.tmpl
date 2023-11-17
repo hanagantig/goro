@@ -6,7 +6,7 @@ package app
 // Editing this file might prove futile when you re-run the goro commands
 
 import (
-    {{ renderImports "storage" "definition" .Chunks }}
+    {{ renderImports "storage" "definition" "all" .Chunks }}
 
     "{{ $.App.Module }}/internal/usecase"
 
@@ -44,9 +44,15 @@ func (c *Container) GetUseCase() *usecase.UseCase {
 
 {{range .Chunks}}
     {{if eq .Scope `storage`}}
-        func (c *Container) get{{toCamelCase .Name}}() {{.ReturnType}} {
-            return c.{{.Name}}
-        }
+        {{if eq .Name "http"}}
+            func (c *Container) get{{toCamelCase .Name}}Client() {{.ReturnType}} {
+                return c.{{.Name}}Client
+            }
+        {{else}}
+            func (c *Container) get{{toCamelCase .Name}}() {{.ReturnType}} {
+                return c.{{.Name}}
+            }
+        {{end}}
     {{end}}
 {{end}}
 
@@ -61,9 +67,16 @@ func (c *Container) GetUseCase() *usecase.UseCase {
 
 {{if .Adapters}}
     {{range $key, $val := .Adapters}}
-        func (c *Container) get{{toCamelCase $val.Name }}() *{{$val.GetPkgName}}.Repository {
+        {{if contains $val.Storage.String "http"}}
+            func (c *Container) get{{toCamelCase $val.Name}}() *{{$val.GetPkgName}}.Repository {
 
-            return {{$val.GetPkgName}}.{{ $val.GetConstructorName }} (c.get{{toCamelCase $val.Storage.String}}())
-        }
+                return {{$val.GetPkgName}}.{{ $val.GetConstructorName }} (c.get{{toCamelCase $val.Storage.String}}Client())
+            }
+        {{else}}
+            func (c *Container) get{{toCamelCase $val.Name}}() *{{$val.GetPkgName}}.Repository {
+
+                return {{$val.GetPkgName}}.{{ $val.GetConstructorName }} (c.get{{toCamelCase $val.Storage.String}}())
+            }
+        {{end}}
     {{end}}
 {{end}}

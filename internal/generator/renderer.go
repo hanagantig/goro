@@ -8,29 +8,35 @@ import (
 	"text/template"
 )
 
+var RepoInServiceFlag bool = false
+
 var FuncMap = template.FuncMap{
-	"renderImports":                  RenderImports,
-	"renderDefinition":               RenderDefinitions,
-	"renderInitializationsWithError": RenderInitializationsWithError,
-	"renderStructPopulation":         RenderStructPopulation,
-	"renderArgs":                     RenderArgs,
-	"renderBuild":                    RenderBuild,
-	"toCamelCase":                    strcase.ToCamel,
-	"toPrivateName":                  ToPrivateName,
-	"toPublicName":                   ToPublicName,
-	"contains":                       strings.Contains,
+	"renderImports":          RenderImports,
+	"renderDefinition":       RenderDefinitions,
+	"renderInitializations":  RenderInitializations,
+	"renderStructPopulation": RenderStructPopulation,
+	"renderArgs":             RenderArgs,
+	"renderBuild":            RenderBuild,
+	"toCamelCase":            strcase.ToCamel,
+	"toPrivateName":          ToPrivateName,
+	"toPublicName":           ToPublicName,
+	"contains":               strings.Contains,
+	"incRepoImportFlag":      IncRepoImportFlag,
+	"hasRepoImportFlag":      HasRepoImportFlag,
 }
 
-func RenderImports(scope, stage string, chunks []entity.Chunk) string {
+func RenderImports(scope, stage string, chunkType string, chunks []entity.Chunk) string {
 	res := strings.Builder{}
 	for _, ch := range chunks {
-		switch stage {
-		case "build":
-			fmt.Fprintf(&res, "%v\n", ch.BuildImports)
-		case "definition":
-			fmt.Fprintf(&res, "%v\n", ch.DefinitionImports)
-		default:
-			fmt.Fprintf(&res, "%v\n", ch.DefinitionImports)
+		if strings.Contains(ch.Name, chunkType) || chunkType == "all" {
+			switch stage {
+			case "build":
+				fmt.Fprintf(&res, "%v\n", ch.BuildImports)
+			case "definition":
+				fmt.Fprintf(&res, "%v\n", ch.DefinitionImports)
+			default:
+				fmt.Fprintf(&res, "%v\n", ch.DefinitionImports)
+			}
 		}
 	}
 
@@ -40,18 +46,29 @@ func RenderImports(scope, stage string, chunks []entity.Chunk) string {
 func RenderDefinitions(scope string, chunks []entity.Chunk) string {
 	res := strings.Builder{}
 	for _, ch := range chunks {
-		fmt.Fprintf(&res, "%v %v\n", ch.Name, ch.ReturnType)
+		switch ch.Name {
+		case "http":
+			fmt.Fprintf(&res, "%vClient %v\n", ch.Name, ch.ReturnType)
+		default:
+			fmt.Fprintf(&res, "%v %v\n", ch.Name, ch.ReturnType)
+		}
 	}
 
 	return res.String()
 }
 
-func RenderInitializationsWithError(scope, prefix string, chunks []entity.Chunk) string {
+func RenderInitializations(scope, prefix string, chunks []entity.Chunk) string {
 	res := strings.Builder{}
 	for _, ch := range chunks {
-		fmt.Fprintf(&res, "%v,%v := %v.%v(cfg.MainDB)\n", ch.ArgName, "err", prefix, ch.InitFunc)
-		fmt.Fprintf(&res, "if err != nil {\n return nil, err\n}\n")
-		fmt.Fprintf(&res, "%v.%v = %v\n", prefix, ch.Name, ch.ArgName)
+		switch ch.Name {
+		case "http":
+			fmt.Fprintf(&res, "%v.%vClient = %v.%v()\n\n\n", prefix, ch.Name, prefix, ch.InitFunc)
+		default:
+			fmt.Fprintf(&res, "%v,%v := %v.%v(cfg.MainDB)\n", ch.ArgName, "err", prefix, ch.InitFunc)
+			fmt.Fprintf(&res, "if err != nil {\n return nil, err\n}\n")
+			fmt.Fprintf(&res, "%v.%v = %v\n\n\n", prefix, ch.Name, ch.ArgName)
+
+		}
 	}
 
 	return res.String()
@@ -61,10 +78,12 @@ func RenderDependency(scope, prefix string, chunks []entity.Chunk) string {
 	return "// render dependencies code"
 }
 
-func RenderBuild(scope string, chunks []entity.Chunk) string {
+func RenderBuild(scope string, chunkType string, chunks []entity.Chunk) string {
 	res := strings.Builder{}
 	for _, ch := range chunks {
-		fmt.Fprintf(&res, "%v\n\n", ch.Build)
+		if strings.Contains(ch.Name, chunkType) {
+			fmt.Fprintf(&res, "%v\n\n", ch.Build)
+		}
 	}
 
 	return res.String()
@@ -82,7 +101,12 @@ func RenderArgs(scope string, chunks []entity.Chunk) string {
 func RenderStructPopulation(scope string, chunks []entity.Chunk) string {
 	res := strings.Builder{}
 	for _, ch := range chunks {
-		fmt.Fprintf(&res, "%v: %v,\n", ch.Name, ch.ArgName)
+		switch ch.Name {
+		case "http":
+			fmt.Fprintf(&res, "%vClient: %v,\n", ch.Name, ch.ArgName)
+		default:
+			fmt.Fprintf(&res, "%v: %v,\n", ch.Name, ch.ArgName)
+		}
 	}
 
 	return res.String()
@@ -94,4 +118,16 @@ func ToPrivateName(name string) string {
 
 func ToPublicName(name string) string {
 	return strings.ToUpper(string(name[0])) + name[1:]
+}
+
+func IncRepoImportFlag() bool {
+	RepoInServiceFlag = true
+	return RepoInServiceFlag
+}
+
+func HasRepoImportFlag() bool {
+	defer func() {
+		RepoInServiceFlag = false
+	}()
+	return RepoInServiceFlag
 }

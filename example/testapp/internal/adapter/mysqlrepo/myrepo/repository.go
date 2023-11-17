@@ -6,6 +6,7 @@ package myrepo
 
 import (
 	"database/sql"
+
 	"testapp/internal/adapter/mysqlrepo"
 )
 

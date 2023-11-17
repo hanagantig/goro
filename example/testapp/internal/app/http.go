@@ -6,11 +6,13 @@ package app
 // Editing this file might prove futile when you re-run the goro commands
 
 import (
-	"fmt"
 	"github.com/hanagantig/gracy"
-	"go.uber.org/zap"
+	client "net/http"
 	"testapp/internal/handler/http"
 	"testapp/internal/handler/http/api/v1"
+
+	"fmt"
+	"go.uber.org/zap"
 )
 
 func (a *App) StartHTTPServer() error {
@@ -50,4 +52,9 @@ func (a *App) startHTTPServer() {
 	if err != nil {
 		a.logger.Fatal("Fail to start %s http server:", zap.String("app", a.cfg.App.Name), zap.Error(err))
 	}
+}
+
+func (a *App) newHttpClient() *client.Client {
+	client := client.Client{}
+	return &client
 }

@@ -8,7 +8,7 @@ package app
 import (
 	"{{ .App.Module }}/internal/config"
 	"fmt"
-	{{ renderImports "storage" "build" .Chunks }}
+	{{ renderImports "storage" "build" "sql" .Chunks }}
 )
 
-{{ renderBuild "storage" .Chunks }}
+{{ renderBuild "storage" "sql" .Chunks }}

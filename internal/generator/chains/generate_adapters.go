@@ -61,14 +61,16 @@ func (g *generateAdapterChain) Apply(fs *afero.Afero, data entity.Config) (*afer
 				return nil, err
 			}
 
-			generated, err := generate(transactorFilePath, transactorTmpl, adapter)
-			if err != nil {
-				return nil, err
-			}
+			if adapter.IsTransactional() {
+				generated, err := generate(transactorFilePath, transactorTmpl, adapter)
+				if err != nil {
+					return nil, err
+				}
 
-			err = fs.WriteFile(storageFolderPath+"/transactor.go.tmpl", generated, 0644)
-			if err != nil {
-				return nil, err
+				err = fs.WriteFile(storageFolderPath+"/transactor.go.tmpl", generated, 0644)
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 

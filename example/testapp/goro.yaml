@@ -7,6 +7,7 @@ storages:
   - mysql
   - mysqlx
   - pgsqlx
+  - http
 
 handlers:
   - http
@@ -17,6 +18,7 @@ use_case:
   deps:
     - MyService
     - PingPong
+    - ClientService
   methods:
     - GetClients
     - SignIn
@@ -29,13 +31,30 @@ services:
       - GetList
       - GetByFilter
     deps:
+      - BankApi
       - MyRepo
+      
+  - name: ProductService
+    methods:
+      - GetList
+      - GetByFilter
+    deps:
+      - ProductApi
+      
+  - name: ClientService
+    methods:
+      - GetList
+      - GetByFilter
+    deps:
+      - ClientRepo
+
 
   - name: PingPong
     methods:
       - Pong
     deps:
       - MyRepo
+      - OrdersRepo
 
 adapters:
   - name: MyRepo
@@ -50,8 +69,18 @@ adapters:
     methods:
       - GitByDate
       - GetByID
-
-  - name: UserRepo
+      
+  - name: OrdersRepo
     storage: pgsqlx
+    methods:
+      - GetByID
+
+  - name: BankApi
+    storage: http
+    methods:
+      - GetByID
+      
+  - name: ProductApi
+    storage: http
     methods:
       - GetByID

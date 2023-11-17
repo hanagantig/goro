@@ -4,12 +4,14 @@ var storagePackages = map[Storage]string{
 	"mysql":  "\"database/sql\"",
 	"mysqlx": "\"github.com/jmoiron/sqlx\"",
 	"pgsqlx": "\"github.com/jmoiron/sqlx\"",
+	"http":   "\"net/http\"",
 }
 
 var connectionsType = map[Storage]string{
 	"mysql":  "*sql.DB",
 	"mysqlx": "*sqlx.DB",
 	"pgsqlx": "*sqlx.DB",
+	"http":   "*http.Client",
 }
 
 type Storage string

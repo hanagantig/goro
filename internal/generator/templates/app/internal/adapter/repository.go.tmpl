@@ -6,15 +6,32 @@ package {{$.GetPkgName}}
 
 import (
     {{ $.Storage.GetConnImportName }}
+    {{if $.IsTransactional}}
     "{{ $.AppModule }}/internal/adapter/{{$.Storage.GetFolderName}}"
+    {{end}}
 )
 
 type Repository struct {
+{{if $.IsTransactional}}
 	{{$.Storage.GetFolderName}}.Transactor
+{{end}}
+{{if contains $.Storage.String "http"}}
+    Client {{$.Storage.GetConnectionType}}
+{{end}}
 }
 
+{{if $.IsTransactional}}
 func {{$.GetConstructorName}}(conn {{ $.Storage.GetConnectionType }}) *Repository {
 	return &Repository{
 		{{$.Storage.GetFolderName}}.NewTransactor(conn),
 	}
 }
+{{end}}
+
+{{if contains $.Storage.String "http"}}
+func {{$.GetConstructorName}}(client {{ $.Storage.GetConnectionType }}) *Repository {
+	return &Repository{
+		Client: client,
+	}
+}
+{{end}}

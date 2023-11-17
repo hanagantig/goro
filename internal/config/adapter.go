@@ -24,6 +24,12 @@ func (a Adapters) GetMap() map[string]struct{} {
 	for _, ad := range a {
 		res[ad.Name] = struct{}{}
 	}
-
 	return res
+}
+
+func (a Adapter) IsTransactional() bool {
+	if strings.Contains(a.Storage.String(), "sql") {
+		return true
+	}
+	return false
 }

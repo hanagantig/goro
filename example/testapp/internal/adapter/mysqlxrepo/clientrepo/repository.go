@@ -6,6 +6,7 @@ package clientrepo
 
 import (
 	"github.com/jmoiron/sqlx"
+
 	"testapp/internal/adapter/mysqlxrepo"
 )
 

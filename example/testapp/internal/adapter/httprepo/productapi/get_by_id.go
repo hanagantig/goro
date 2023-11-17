@@ -1,4 +1,4 @@
-package userrepo
+package productapi
 
 import (
 	"context"

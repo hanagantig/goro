@@ -14,13 +14,23 @@ type myRepo interface {
 	// TODO: define interface to inject a service or an adapter
 }
 
-type Service struct {
-	myRepo myRepo
+type ordersRepo interface {
+	service.Transactor
+
+	// TODO: define interface to inject a service or an adapter
 }
 
-func NewService(myRepo myRepo) *Service {
+type Service struct {
+	myRepo myRepo
+
+	ordersRepo ordersRepo
+}
+
+func NewService(myRepo myRepo, ordersRepo ordersRepo) *Service {
 	return &Service{
 
 		myRepo: myRepo,
+
+		ordersRepo: ordersRepo,
 	}
 }
