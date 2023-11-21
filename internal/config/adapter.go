@@ -1,6 +1,8 @@
 package config
 
-import "strings"
+import (
+	"strings"
+)
 
 type Adapter struct {
 	Name      string   `yaml:"name"`
@@ -26,4 +28,14 @@ func (a Adapters) GetMap() map[string]struct{} {
 	}
 
 	return res
+}
+
+func (a Adapter) IsTransactional() bool {
+	txMap := map[Storage]struct{}{
+		"pgsqlx": {},
+		"mysql":  {},
+		"mysqlx": {},
+	}
+	_, ok := txMap[a.Storage]
+	return ok
 }

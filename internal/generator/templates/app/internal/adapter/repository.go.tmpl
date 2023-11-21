@@ -6,15 +6,25 @@ package {{$.GetPkgName}}
 
 import (
     {{ $.Storage.GetConnImportName }}
+    {{if $.IsTransactional}}
     "{{ $.AppModule }}/internal/adapter/{{$.Storage.GetFolderName}}"
+    {{end}}
 )
 
 type Repository struct {
-	{{$.Storage.GetFolderName}}.Transactor
+  {{if $.IsTransactional}}	
+  {{$.Storage.GetFolderName}}.Transactor
+  {{else}}
+  {{$.Storage.GetConnectionName}} {{$.Storage.GetConnectionType}}
+  {{end}}
 }
 
-func {{$.GetConstructorName}}(conn {{ $.Storage.GetConnectionType }}) *Repository {
+func {{$.GetConstructorName}}({{$.Storage.GetConnectionName}} {{ $.Storage.GetConnectionType }}) *Repository {
 	return &Repository{
-		{{$.Storage.GetFolderName}}.NewTransactor(conn),
+    {{if $.IsTransactional}}
+    {{$.Storage.GetFolderName}}.NewTransactor({{$.Storage.GetConnectionName}}),
+		{{else}}
+    {{$.Storage.GetConnectionName}}: {{$.Storage.GetConnectionName}}
+    {{end}}
 	}
 }

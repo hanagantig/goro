@@ -12,8 +12,16 @@ var connectionsType = map[Storage]string{
 	"pgsqlx": "*sqlx.DB",
 }
 
-type Storage string
-type Storages []Storage
+var connectionName = map[Storage]string{
+	"pgsqlx": "conn",
+	"mysql":  "conn",
+	"mysqlx": "conn",
+}
+
+type (
+	Storage  string
+	Storages []Storage
+)
 
 func (s Storages) GetMap() map[Storage]struct{} {
 	res := make(map[Storage]struct{}, 0)
@@ -38,4 +46,8 @@ func (s Storage) GetConnImportName() string {
 
 func (s Storage) GetConnectionType() string {
 	return connectionsType[s]
+}
+
+func (s Storage) GetConnectionName() string {
+	return connectionName[s]
 }
