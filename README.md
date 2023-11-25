@@ -6,13 +6,39 @@
     </picture>
 </p>
 
-> :warning: *Still under development*
+GORO is a tool that creates a neat and easily expandable project layout for your Golang code, including all the essential boilerplate.
 
-A tool to generate your service layout.
-Goro helps to keep single approach for your code architecture.
+## Project Status
+
+⚠️ **Alpha Stage: Work in Progress**
+
+This project is currently in the alpha stage, indicating that it's in the early phases of development. It may contain bugs, undergo frequent changes, and lack certain features. Use it cautiously and feel free to contribute to its improvement. Check the issues for known problems or planned enhancements.
+
+## Why use GORO?
+
+Starting a new Golang project often involves setting up a project layout and defining a solid architecture. GORO, the code generation tool, simplifies this process, allowing you to focus on the core of your project rather than getting bogged down by the initial setup.
+
+### Key Benefits:
+
+- **Rapid Project Kickstart:**
+  GORO provides a clean and easily extendable Golang project layout, enabling you to kickstart your project swiftly. Say goodbye to the tedious task of manually structuring your project each time.
+
+- **Consistent Code Architecture:**
+  With GORO, maintain a single, consistent approach to your code architecture across projects. This ensures a streamlined development process and facilitates easier collaboration among team members.
+
+- **Time Savings:**
+  GORO saves you valuable time by automating the project initialization process. The time spent on setting up a new project with GORO is significantly less than manual implementation, allowing you to dive into your project's core functionalities sooner.
+
+- **Reduced Error Rate:**
+  GORO minimizes the chances of errors during project setup. By automating the generation of a clean and organized project structure, GORO reduces the risk of common mistakes, letting you focus on the creative and innovative aspects of your project.
+
+- **Flexibility with Frameworks:**
+  GORO is designed to integrate seamlessly with various web frameworks. Whether you prefer a specific framework or want the flexibility to switch between them, GORO provides the adaptability you need.
+
+Give GORO a try and experience a faster, more efficient start to your Golang projects.
 
 ## Getting started
-To install the tool, run:
+To install GORO, run:
 ```bash
 go install github.com/hanagantig/goro@latest
 ```
