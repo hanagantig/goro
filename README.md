@@ -6,6 +6,8 @@
     </picture>
 </p>
 
+[![Telegram](https://img.shields.io/badge/Join-Telegram-blue)](https://t.me/gorohub)
+
 GORO is a tool that creates a neat and easily expandable project layout for your Golang code, including all the essential boilerplate.
 
 ## Project Status
@@ -116,3 +118,11 @@ You can get more details from the Youtube video (in Russian):
 │       └── ...
 └── pkg - your public pkgs
 ```
+
+## Connect with Us
+
+Stay updated and join our community on Telegram:
+
+[![Telegram](https://img.shields.io/badge/Join-Telegram-blue)](https://t.me/gorohub)
+
+We value your feedback, comments, and suggestions! Feel free to share your thoughts in our Telegram channel. Whether you have questions, ideas for improvement, or just want to say hello, we'd love to hear from you.
