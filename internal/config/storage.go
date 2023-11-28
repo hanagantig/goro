@@ -18,10 +18,14 @@ var connectionName = map[Storage]string{
 	"mysqlx": "conn",
 }
 
-type (
-	Storage  string
-	Storages []Storage
-)
+var transactionalStorages = map[Storage]bool{
+	"pgsqlx": true,
+	"mysql":  true,
+	"mysqlx": true,
+}
+
+type Storage string
+type Storages []Storage
 
 func (s Storages) GetMap() map[Storage]struct{} {
 	res := make(map[Storage]struct{}, 0)

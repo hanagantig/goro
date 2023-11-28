@@ -31,11 +31,5 @@ func (a Adapters) GetMap() map[string]struct{} {
 }
 
 func (a Adapter) IsTransactional() bool {
-	txMap := map[Storage]struct{}{
-		"pgsqlx": {},
-		"mysql":  {},
-		"mysqlx": {},
-	}
-	_, ok := txMap[a.Storage]
-	return ok
+	return transactionalStorages[a.Storage]
 }
