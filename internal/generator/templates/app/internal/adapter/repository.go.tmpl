@@ -21,10 +21,10 @@ type Repository struct {
 
 func {{$.GetConstructorName}}({{$.Storage.GetConnectionName}} {{ $.Storage.GetConnectionType }}) *Repository {
 	return &Repository{
-    {{if $.IsTransactional}}
-    {{$.Storage.GetFolderName}}.NewTransactor({{$.Storage.GetConnectionName}}),
-		{{else}}
-    {{$.Storage.GetConnectionName}}: {{$.Storage.GetConnectionName}}
-    {{end}}
+    	{{if $.IsTransactional}}
+    	{{$.Storage.GetFolderName}}.NewTransactor({{$.Storage.GetConnectionName}}),
+	{{else}}
+    	{{$.Storage.GetConnectionName}}: {{$.Storage.GetConnectionName}}
+    	{{end}}
 	}
 }
