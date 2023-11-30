@@ -2,6 +2,7 @@ package mysqlchunk
 
 import (
 	_ "embed"
+
 	"github.com/hanagantig/goro/internal/config"
 )
 
@@ -16,7 +17,7 @@ const initHasErr = true
 func NewMySQLChunk() config.Chunk {
 	return config.Chunk{
 		Name:              name,
-		Scope:             "storage",
+		Scope:             "storage.database.mysql",
 		ArgName:           "mysqlConnect",
 		ReturnType:        "*sql.DB",
 		DefinitionImports: "\"database/sql\"",

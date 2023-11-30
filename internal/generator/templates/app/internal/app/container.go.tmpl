@@ -6,7 +6,7 @@ package app
 // Editing this file might prove futile when you re-run the goro commands
 
 import (
-    {{ renderImports "storage" "definition" .Chunks }}
+    {{ renderImports "storage" "definition" . }}
 
     "{{ $.App.Module }}/internal/usecase"
 
@@ -24,15 +24,15 @@ import (
 )
 
 type Container struct {
-	{{ renderDefinition "storage" .Chunks }}
+	{{ renderDefinition "storage" . }}
 
 	deps    map[string]interface{}
 }
 
-func NewContainer({{ renderArgs "storage" .Chunks }}) *Container {
+func NewContainer({{ renderArgs "storage" . }}) *Container {
 	
     return &Container{
-		{{ renderStructPopulation "storage" .Chunks }}
+		{{ renderStructPopulation "storage" . }}
 		deps:    make(map[string]interface{}),
 	}
 }
@@ -43,7 +43,7 @@ func (c *Container) GetUseCase() *usecase.UseCase {
 }
 
 {{range .Chunks}}
-    {{if eq .Scope `storage`}}
+    {{if contains .Scope "storage"}}
         func (c *Container) get{{toCamelCase .Name}}() {{.ReturnType}} {
             return c.{{.Name}}
         }

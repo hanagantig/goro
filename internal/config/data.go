@@ -131,3 +131,14 @@ func (c *Config) askWorkDir() (string, error) {
 		// TODO: validate path
 	}).Run()
 }
+
+func (c *Config) GetChunksByScope(scope string) []Chunk {
+	chunks := make([]Chunk, 0, len(c.Chunks))
+	for _, ch := range c.Chunks {
+		if strings.HasPrefix(ch.Scope, scope) {
+			chunks = append(chunks, ch)
+		}
+	}
+
+	return chunks
+}
