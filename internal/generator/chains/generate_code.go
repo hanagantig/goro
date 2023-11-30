@@ -2,13 +2,14 @@ package chains
 
 import (
 	"bytes"
-	entity "github.com/hanagantig/goro/internal/config"
-	"github.com/hanagantig/goro/internal/generator"
-	"github.com/hanagantig/goro/pkg/afero"
 	"go/format"
 	"os"
 	"strings"
 	"text/template"
+
+	entity "github.com/hanagantig/goro/internal/config"
+	"github.com/hanagantig/goro/internal/generator"
+	"github.com/hanagantig/goro/pkg/afero"
 )
 
 type generateCodeChain struct{}

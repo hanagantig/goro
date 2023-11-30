@@ -2,11 +2,12 @@ package config
 
 import (
 	"fmt"
-	"github.com/manifoldco/promptui"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/manifoldco/promptui"
+	"gopkg.in/yaml.v2"
 )
 
 type DependencyName string
