@@ -23,8 +23,8 @@ func (s Service) GetPkgName() string {
 
 func (s Service) CheckTransactionalDeps(txAdapterMap map[string]bool) bool {
 	for _, depsName := range s.Deps {
-		tx, ok := txAdapterMap[depsName]
-		if ok && tx {
+		tx := txAdapterMap[depsName]
+		if tx {
 			return true
 		}
 	}
@@ -35,8 +35,8 @@ func (s Service) CheckTransactionalDeps(txAdapterMap map[string]bool) bool {
 func (s Service) GetTransactionalDeps(txAdapterMap map[string]bool) []string {
 	res := make([]string, 0, len(s.Deps))
 	for _, depsName := range s.Deps {
-		tx, ok := txAdapterMap[depsName]
-		if ok && tx {
+		tx := txAdapterMap[depsName]
+		if tx {
 			res = append(res, depsName)
 		}
 	}
