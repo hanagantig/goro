@@ -11,16 +11,17 @@ import (
 )
 
 var FuncMap = template.FuncMap{
-	"renderImports":                  RenderImports,
-	"renderDefinition":               RenderDefinitions,
-	"renderInitializationsWithError": RenderInitializationsWithError,
-	"renderStructPopulation":         RenderStructPopulation,
-	"renderArgs":                     RenderArgs,
-	"renderBuild":                    RenderBuild,
-	"toCamelCase":                    strcase.ToCamel,
-	"toPrivateName":                  ToPrivateName,
-	"toPublicName":                   ToPublicName,
-	"contains":                       strings.Contains,
+	"renderImports":                     RenderImports,
+	"renderDefinition":                  RenderDefinitions,
+	"renderInitializationsWithError":    RenderInitializationsWithError,
+	"renderInitializationsWithoutError": RenderInitializationsWithoutError,
+	"renderStructPopulation":            RenderStructPopulation,
+	"renderArgs":                        RenderArgs,
+	"renderBuild":                       RenderBuild,
+	"toCamelCase":                       strcase.ToCamel,
+	"toPrivateName":                     ToPrivateName,
+	"toPublicName":                      ToPublicName,
+	"contains":                          strings.Contains,
 }
 
 func RenderImports(scope, stage string, cfg entity.Config) string {
@@ -51,11 +52,30 @@ func RenderDefinitions(scope string, cfg entity.Config) string {
 }
 
 func RenderInitializationsWithError(scope, prefix string, cfg entity.Config) string {
-	chunks := cfg.GetChunksByScope(scope)
+	chunks := cfg.GetChunksByScopeAndInitHasErr(scope)
 	res := strings.Builder{}
 	for _, ch := range chunks {
-		fmt.Fprintf(&res, "%v,%v := %v.%v(cfg.MainDB)\n", ch.ArgName, "err", prefix, ch.InitFunc)
+		fmt.Fprintf(
+			&res,
+			"%v,%v := %v.%v(%v)\n",
+			ch.ArgName,
+			"err",
+			prefix,
+			ch.InitFunc,
+			ch.InitConfig,
+		)
 		fmt.Fprintf(&res, "if err != nil {\n return nil, err\n}\n")
+		fmt.Fprintf(&res, "%v.%v = %v\n", prefix, ch.Name, ch.ArgName)
+	}
+
+	return res.String()
+}
+
+func RenderInitializationsWithoutError(scope, prefix string, cfg entity.Config) string {
+	chunks := cfg.GetChunksByScopeAndInitHasNotErr(scope)
+	res := strings.Builder{}
+	for _, ch := range chunks {
+		fmt.Fprintf(&res, "%v := %v.%v(%v)\n", ch.ArgName, prefix, ch.InitFunc, ch.InitConfig)
 		fmt.Fprintf(&res, "%v.%v = %v\n", prefix, ch.Name, ch.ArgName)
 	}
 

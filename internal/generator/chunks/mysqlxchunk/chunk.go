@@ -23,5 +23,7 @@ func NewMySQLxChunk() config.Chunk {
 		InitFunc:          "newMySQLxConnect",
 		Build:             buildTmpl,
 		Configs:           "mysqlx configs",
+		InitConfig:        "cfg.MainDB",
+		InitHasErr:        true,
 	}
 }

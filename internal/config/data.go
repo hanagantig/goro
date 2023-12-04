@@ -31,6 +31,8 @@ type Chunk struct {
 	InitFunc          string
 	Build             string
 	Configs           string
+	InitConfig        string
+	InitHasErr        bool
 }
 
 type App struct {
@@ -136,6 +138,28 @@ func (c *Config) GetChunksByScope(scope string) []Chunk {
 	chunks := make([]Chunk, 0, len(c.Chunks))
 	for _, ch := range c.Chunks {
 		if strings.HasPrefix(ch.Scope, scope) {
+			chunks = append(chunks, ch)
+		}
+	}
+
+	return chunks
+}
+
+func (c *Config) GetChunksByScopeAndInitHasErr(scope string) []Chunk {
+	chunks := make([]Chunk, 0, len(c.Chunks))
+	for _, ch := range c.Chunks {
+		if strings.HasPrefix(ch.Scope, scope) && ch.InitHasErr {
+			chunks = append(chunks, ch)
+		}
+	}
+
+	return chunks
+}
+
+func (c *Config) GetChunksByScopeAndInitHasNotErr(scope string) []Chunk {
+	chunks := make([]Chunk, 0, len(c.Chunks))
+	for _, ch := range c.Chunks {
+		if strings.HasPrefix(ch.Scope, scope) && !ch.InitHasErr {
 			chunks = append(chunks, ch)
 		}
 	}

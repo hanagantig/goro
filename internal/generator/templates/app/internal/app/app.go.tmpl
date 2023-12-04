@@ -55,6 +55,7 @@ func NewApp(configPath string) (*App, error) {
 	//app.initHealthChecker()
 
 	{{ renderInitializationsWithError "storage" "app" . }}
+  {{ renderInitializationsWithoutError "storage" "app" . }}
 
 	//goro:init dependencies
 	app.c = NewContainer({{range .Chunks}}{{if contains .Scope "storage"}}app.{{.Name}},{{end}}{{end}})

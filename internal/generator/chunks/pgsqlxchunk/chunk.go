@@ -23,5 +23,7 @@ func NewPostgresChunk() config.Chunk {
 		InitFunc:          "newPgSqlxConnect",
 		Build:             buildTmpl,
 		Configs:           "pgSqlx configs",
+		InitConfig:        "cfg.MainDB",
+		InitHasErr:        true,
 	}
 }
