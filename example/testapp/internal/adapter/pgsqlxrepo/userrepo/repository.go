@@ -6,6 +6,7 @@ package userrepo
 
 import (
 	"github.com/jmoiron/sqlx"
+
 	"testapp/internal/adapter/pgsqlxrepo"
 )
 
@@ -15,6 +16,7 @@ type Repository struct {
 
 func NewRepository(conn *sqlx.DB) *Repository {
 	return &Repository{
+
 		pgsqlxrepo.NewTransactor(conn),
 	}
 }

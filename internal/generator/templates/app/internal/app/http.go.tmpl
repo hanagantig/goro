@@ -11,6 +11,7 @@ import (
 	"github.com/hanagantig/gracy"
 	"fmt"
 	"go.uber.org/zap"
+  {{ renderImports "storage.http" "build" . }}
 )
 
 func (a *App) StartHTTPServer() error {
@@ -51,3 +52,5 @@ func (a *App) startHTTPServer() {
 		a.logger.Fatal("Fail to start %s http server:", zap.String("app",a.cfg.App.Name), zap.Error(err))
 	}
 }
+
+{{ renderBuild "storage.http" . }}

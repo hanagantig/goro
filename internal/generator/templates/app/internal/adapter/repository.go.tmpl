@@ -24,7 +24,7 @@ func {{$.GetConstructorName}}({{$.Storage.GetConnectionName}} {{ $.Storage.GetCo
     	{{if $.IsTransactional}}
     	{{$.Storage.GetFolderName}}.NewTransactor({{$.Storage.GetConnectionName}}),
 	{{else}}
-    	{{$.Storage.GetConnectionName}}: {{$.Storage.GetConnectionName}}
+    	{{$.Storage.GetConnectionName}}: {{$.Storage.GetConnectionName}},
     	{{end}}
 	}
 }

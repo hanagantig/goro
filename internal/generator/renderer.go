@@ -55,15 +55,7 @@ func RenderInitializationsWithError(scope, prefix string, cfg entity.Config) str
 	chunks := cfg.GetChunksByScopeAndInitHasErr(scope)
 	res := strings.Builder{}
 	for _, ch := range chunks {
-		fmt.Fprintf(
-			&res,
-			"%v,%v := %v.%v(%v)\n",
-			ch.ArgName,
-			"err",
-			prefix,
-			ch.InitFunc,
-			ch.InitConfig,
-		)
+		fmt.Fprintf(&res, "%v,%v := %v.%v(%v)\n", ch.ArgName, "err", prefix, ch.InitFunc, ch.InitConfig)
 		fmt.Fprintf(&res, "if err != nil {\n return nil, err\n}\n")
 		fmt.Fprintf(&res, "%v.%v = %v\n", prefix, ch.Name, ch.ArgName)
 	}

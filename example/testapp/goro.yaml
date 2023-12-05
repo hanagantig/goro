@@ -7,6 +7,7 @@ storages:
   - mysql
   - mysqlx
   - pgsqlx
+  - http
 
 handlers:
   - http
@@ -37,6 +38,12 @@ services:
     deps:
       - MyRepo
 
+  - name: OrderService
+    methods:
+      - GetByID
+    deps:
+      - OrdersRepo
+
 adapters:
   - name: MyRepo
     storage: mysql
@@ -55,3 +62,9 @@ adapters:
     storage: pgsqlx
     methods:
       - GetByID
+
+  - name: OrdersRepo
+    storage: http
+    methods:
+      - GetByID
+  

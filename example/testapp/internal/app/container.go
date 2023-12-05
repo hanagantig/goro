@@ -8,12 +8,15 @@ package app
 import (
 	"database/sql"
 	"github.com/jmoiron/sqlx"
+	"net/http"
 
 	"testapp/internal/usecase"
 
 	"testapp/internal/service/myservice"
+	"testapp/internal/service/orderservice"
 	"testapp/internal/service/pingpong"
 
+	"testapp/internal/adapter/httprepo/ordersrepo"
 	"testapp/internal/adapter/mysqlrepo/myrepo"
 	"testapp/internal/adapter/mysqlxrepo/clientrepo"
 	"testapp/internal/adapter/pgsqlxrepo/userrepo"
@@ -23,16 +26,18 @@ type Container struct {
 	mysql  *sql.DB
 	mysqlx *sqlx.DB
 	pgsqlx *sqlx.DB
+	http   *http.Client
 
 	deps map[string]interface{}
 }
 
-func NewContainer(mysqlConnect *sql.DB, mysqlxConn *sqlx.DB, pgSqlxConn *sqlx.DB) *Container {
+func NewContainer(mysqlConnect *sql.DB, mysqlxConn *sqlx.DB, pgSqlxConn *sqlx.DB, httpClient *http.Client) *Container {
 
 	return &Container{
 		mysql:  mysqlConnect,
 		mysqlx: mysqlxConn,
 		pgsqlx: pgSqlxConn,
+		http:   httpClient,
 
 		deps: make(map[string]interface{}),
 	}
@@ -55,6 +60,10 @@ func (c *Container) getPgsqlx() *sqlx.DB {
 	return c.pgsqlx
 }
 
+func (c *Container) getHttp() *http.Client {
+	return c.http
+}
+
 func (c *Container) getMyService() *myservice.Service {
 
 	return myservice.NewService(c.getMyRepo())
@@ -63,6 +72,11 @@ func (c *Container) getMyService() *myservice.Service {
 func (c *Container) getPingPong() *pingpong.Service {
 
 	return pingpong.NewService(c.getMyRepo())
+}
+
+func (c *Container) getOrderService() *orderservice.Service {
+
+	return orderservice.NewService(c.getOrdersRepo())
 }
 
 func (c *Container) getMyRepo() *myrepo.Repository {
@@ -78,4 +92,9 @@ func (c *Container) getClientRepo() *clientrepo.Repository {
 func (c *Container) getUserRepo() *userrepo.Repository {
 
 	return userrepo.NewRepository(c.getPgsqlx())
+}
+
+func (c *Container) getOrdersRepo() *ordersrepo.Repository {
+
+	return ordersrepo.NewRepository(c.getHttp())
 }

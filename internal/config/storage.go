@@ -4,24 +4,28 @@ var storagePackages = map[Storage]string{
 	"mysql":  "\"database/sql\"",
 	"mysqlx": "\"github.com/jmoiron/sqlx\"",
 	"pgsqlx": "\"github.com/jmoiron/sqlx\"",
+	"http":   "\"net/http\"",
 }
 
 var connectionsType = map[Storage]string{
 	"mysql":  "*sql.DB",
 	"mysqlx": "*sqlx.DB",
 	"pgsqlx": "*sqlx.DB",
+	"http":   "*http.Client",
 }
 
 var connectionName = map[Storage]string{
 	"pgsqlx": "conn",
 	"mysql":  "conn",
 	"mysqlx": "conn",
+	"http":   "client",
 }
 
 var transactionalStorages = map[Storage]bool{
 	"pgsqlx": true,
 	"mysql":  true,
 	"mysqlx": true,
+	"http":   false,
 }
 
 type Storage string

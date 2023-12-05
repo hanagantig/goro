@@ -2,6 +2,7 @@ package chains
 
 import (
 	"bytes"
+	"fmt"
 	"go/format"
 	"os"
 	"strings"
@@ -58,7 +59,7 @@ func (g *generateCodeChain) Apply(fs *afero.Afero, data entity.Config) (*afero.A
 			if strings.Contains(f.Name(), ".go") {
 				formatted, err = format.Source(formatted)
 				if err != nil {
-					return err
+					return fmt.Errorf("formated golang file: %w", err)
 				}
 			}
 
