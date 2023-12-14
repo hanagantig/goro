@@ -2,11 +2,12 @@ package config
 
 import (
 	"fmt"
-	"github.com/manifoldco/promptui"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/manifoldco/promptui"
+	"gopkg.in/yaml.v2"
 )
 
 type DependencyName string
@@ -30,6 +31,8 @@ type Chunk struct {
 	InitFunc          string
 	Build             string
 	Configs           string
+	InitConfig        string
+	InitHasErr        bool
 }
 
 type App struct {
@@ -129,4 +132,37 @@ func (c *Config) askWorkDir() (string, error) {
 		Label: "Enter an app work dir or leave it empty to use current directory",
 		// TODO: validate path
 	}).Run()
+}
+
+func (c *Config) GetChunksByScope(scope string) []Chunk {
+	chunks := make([]Chunk, 0, len(c.Chunks))
+	for _, ch := range c.Chunks {
+		if strings.HasPrefix(ch.Scope, scope) {
+			chunks = append(chunks, ch)
+		}
+	}
+
+	return chunks
+}
+
+func (c *Config) GetChunksByScopeAndInitHasErr(scope string) []Chunk {
+	chunks := make([]Chunk, 0, len(c.Chunks))
+	for _, ch := range c.Chunks {
+		if strings.HasPrefix(ch.Scope, scope) && ch.InitHasErr {
+			chunks = append(chunks, ch)
+		}
+	}
+
+	return chunks
+}
+
+func (c *Config) GetChunksByScopeAndInitHasNotErr(scope string) []Chunk {
+	chunks := make([]Chunk, 0, len(c.Chunks))
+	for _, ch := range c.Chunks {
+		if strings.HasPrefix(ch.Scope, scope) && !ch.InitHasErr {
+			chunks = append(chunks, ch)
+		}
+	}
+
+	return chunks
 }

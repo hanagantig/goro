@@ -2,6 +2,7 @@ package mysqlxchunk
 
 import (
 	_ "embed"
+
 	"github.com/hanagantig/goro/internal/config"
 )
 
@@ -14,7 +15,7 @@ const initName = "mysqlxConn"
 func NewMySQLxChunk() config.Chunk {
 	return config.Chunk{
 		Name:              name,
-		Scope:             "storage",
+		Scope:             "storage.database.mysqlx",
 		ArgName:           initName,
 		ReturnType:        "*sqlx.DB",
 		DefinitionImports: "\"github.com/jmoiron/sqlx\"",
@@ -22,5 +23,7 @@ func NewMySQLxChunk() config.Chunk {
 		InitFunc:          "newMySQLxConnect",
 		Build:             buildTmpl,
 		Configs:           "mysqlx configs",
+		InitConfig:        "cfg.MainDB",
+		InitHasErr:        true,
 	}
 }

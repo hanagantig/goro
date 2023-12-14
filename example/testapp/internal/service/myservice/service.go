@@ -10,7 +10,6 @@ import (
 
 type myRepo interface {
 	service.Transactor
-
 	// TODO: define interface to inject a service or an adapter
 }
 

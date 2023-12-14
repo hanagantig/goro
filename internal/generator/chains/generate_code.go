@@ -2,13 +2,15 @@ package chains
 
 import (
 	"bytes"
-	entity "github.com/hanagantig/goro/internal/config"
-	"github.com/hanagantig/goro/internal/generator"
-	"github.com/hanagantig/goro/pkg/afero"
+	"fmt"
 	"go/format"
 	"os"
 	"strings"
 	"text/template"
+
+	entity "github.com/hanagantig/goro/internal/config"
+	"github.com/hanagantig/goro/internal/generator"
+	"github.com/hanagantig/goro/pkg/afero"
 )
 
 type generateCodeChain struct{}
@@ -57,7 +59,7 @@ func (g *generateCodeChain) Apply(fs *afero.Afero, data entity.Config) (*afero.A
 			if strings.Contains(f.Name(), ".go") {
 				formatted, err = format.Source(formatted)
 				if err != nil {
-					return err
+					return fmt.Errorf("formated golang file: %w", err)
 				}
 			}
 

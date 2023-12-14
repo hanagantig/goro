@@ -2,26 +2,30 @@ package generator
 
 import (
 	"fmt"
-	entity "github.com/hanagantig/goro/internal/config"
-	"github.com/iancoleman/strcase"
 	"strings"
 	"text/template"
+
+	"github.com/iancoleman/strcase"
+
+	entity "github.com/hanagantig/goro/internal/config"
 )
 
 var FuncMap = template.FuncMap{
-	"renderImports":                  RenderImports,
-	"renderDefinition":               RenderDefinitions,
-	"renderInitializationsWithError": RenderInitializationsWithError,
-	"renderStructPopulation":         RenderStructPopulation,
-	"renderArgs":                     RenderArgs,
-	"renderBuild":                    RenderBuild,
-	"toCamelCase":                    strcase.ToCamel,
-	"toPrivateName":                  ToPrivateName,
-	"toPublicName":                   ToPublicName,
-	"contains":                       strings.Contains,
+	"renderImports":                     RenderImports,
+	"renderDefinition":                  RenderDefinitions,
+	"renderInitializationsWithError":    RenderInitializationsWithError,
+	"renderInitializationsWithoutError": RenderInitializationsWithoutError,
+	"renderStructPopulation":            RenderStructPopulation,
+	"renderArgs":                        RenderArgs,
+	"renderBuild":                       RenderBuild,
+	"toCamelCase":                       strcase.ToCamel,
+	"toPrivateName":                     ToPrivateName,
+	"toPublicName":                      ToPublicName,
+	"contains":                          strings.Contains,
 }
 
-func RenderImports(scope, stage string, chunks []entity.Chunk) string {
+func RenderImports(scope, stage string, cfg entity.Config) string {
+	chunks := cfg.GetChunksByScope(scope)
 	res := strings.Builder{}
 	for _, ch := range chunks {
 		switch stage {
@@ -37,7 +41,8 @@ func RenderImports(scope, stage string, chunks []entity.Chunk) string {
 	return res.String()
 }
 
-func RenderDefinitions(scope string, chunks []entity.Chunk) string {
+func RenderDefinitions(scope string, cfg entity.Config) string {
+	chunks := cfg.GetChunksByScope(scope)
 	res := strings.Builder{}
 	for _, ch := range chunks {
 		fmt.Fprintf(&res, "%v %v\n", ch.Name, ch.ReturnType)
@@ -46,10 +51,11 @@ func RenderDefinitions(scope string, chunks []entity.Chunk) string {
 	return res.String()
 }
 
-func RenderInitializationsWithError(scope, prefix string, chunks []entity.Chunk) string {
+func RenderInitializationsWithError(scope, prefix string, cfg entity.Config) string {
+	chunks := cfg.GetChunksByScopeAndInitHasErr(scope)
 	res := strings.Builder{}
 	for _, ch := range chunks {
-		fmt.Fprintf(&res, "%v,%v := %v.%v(cfg.MainDB)\n", ch.ArgName, "err", prefix, ch.InitFunc)
+		fmt.Fprintf(&res, "%v,%v := %v.%v(%v)\n", ch.ArgName, "err", prefix, ch.InitFunc, ch.InitConfig)
 		fmt.Fprintf(&res, "if err != nil {\n return nil, err\n}\n")
 		fmt.Fprintf(&res, "%v.%v = %v\n", prefix, ch.Name, ch.ArgName)
 	}
@@ -57,11 +63,23 @@ func RenderInitializationsWithError(scope, prefix string, chunks []entity.Chunk)
 	return res.String()
 }
 
-func RenderDependency(scope, prefix string, chunks []entity.Chunk) string {
+func RenderInitializationsWithoutError(scope, prefix string, cfg entity.Config) string {
+	chunks := cfg.GetChunksByScopeAndInitHasNotErr(scope)
+	res := strings.Builder{}
+	for _, ch := range chunks {
+		fmt.Fprintf(&res, "%v := %v.%v(%v)\n", ch.ArgName, prefix, ch.InitFunc, ch.InitConfig)
+		fmt.Fprintf(&res, "%v.%v = %v\n", prefix, ch.Name, ch.ArgName)
+	}
+
+	return res.String()
+}
+
+func RenderDependency(scope, prefix string, cfg entity.Config) string {
 	return "// render dependencies code"
 }
 
-func RenderBuild(scope string, chunks []entity.Chunk) string {
+func RenderBuild(scope string, cfg entity.Config) string {
+	chunks := cfg.GetChunksByScope(scope)
 	res := strings.Builder{}
 	for _, ch := range chunks {
 		fmt.Fprintf(&res, "%v\n\n", ch.Build)
@@ -70,7 +88,8 @@ func RenderBuild(scope string, chunks []entity.Chunk) string {
 	return res.String()
 }
 
-func RenderArgs(scope string, chunks []entity.Chunk) string {
+func RenderArgs(scope string, cfg entity.Config) string {
+	chunks := cfg.GetChunksByScope(scope)
 	res := strings.Builder{}
 	for _, ch := range chunks {
 		fmt.Fprintf(&res, "%v %v,", ch.ArgName, ch.ReturnType)
@@ -79,7 +98,8 @@ func RenderArgs(scope string, chunks []entity.Chunk) string {
 	return res.String()
 }
 
-func RenderStructPopulation(scope string, chunks []entity.Chunk) string {
+func RenderStructPopulation(scope string, cfg entity.Config) string {
+	chunks := cfg.GetChunksByScope(scope)
 	res := strings.Builder{}
 	for _, ch := range chunks {
 		fmt.Fprintf(&res, "%v: %v,\n", ch.Name, ch.ArgName)

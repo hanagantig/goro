@@ -6,6 +6,7 @@ package clientrepo
 
 import (
 	"github.com/jmoiron/sqlx"
+
 	"testapp/internal/adapter/mysqlxrepo"
 )
 
@@ -15,6 +16,7 @@ type Repository struct {
 
 func NewRepository(conn *sqlx.DB) *Repository {
 	return &Repository{
+
 		mysqlxrepo.NewTransactor(conn),
 	}
 }

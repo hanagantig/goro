@@ -8,7 +8,7 @@ package app
 import (
 	"sync"
 	"errors"
-    {{ renderImports "storage" "definition" .Chunks }}
+    {{ renderImports "storage" "definition" . }}
 	"{{ .App.Module }}/internal/config"
 	"go.uber.org/zap/zapcore"
 )
@@ -29,7 +29,7 @@ type App struct {
 	//hc     health.Checker
 	//hcOnce *sync.Once
 
-	{{ renderDefinition "storage" .Chunks }}
+	{{ renderDefinition "storage" . }}
 
 	logger Logger
 }
@@ -54,10 +54,11 @@ func NewApp(configPath string) (*App, error) {
 	//goro:init healthChecker
 	//app.initHealthChecker()
 
-	{{ renderInitializationsWithError "storage" "app" .Chunks }}
+	{{ renderInitializationsWithError "storage" "app" . }}
+  {{ renderInitializationsWithoutError "storage" "app" . }}
 
 	//goro:init dependencies
-	app.c = NewContainer({{range .Chunks}}{{if eq .Scope `storage`}}app.{{.Name}},{{end}}{{end}})
+	app.c = NewContainer({{range .Chunks}}{{if contains .Scope "storage"}}app.{{.Name}},{{end}}{{end}})
 
 	return app, nil
 }

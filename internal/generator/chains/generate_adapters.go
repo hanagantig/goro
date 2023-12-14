@@ -2,11 +2,13 @@ package chains
 
 import (
 	"fmt"
-	entity "github.com/hanagantig/goro/internal/config"
-	"github.com/hanagantig/goro/pkg/afero"
-	"github.com/iancoleman/strcase"
 	"os"
 	"strings"
+
+	"github.com/iancoleman/strcase"
+
+	entity "github.com/hanagantig/goro/internal/config"
+	"github.com/hanagantig/goro/pkg/afero"
 )
 
 type generateAdapterChain struct{}
@@ -61,14 +63,16 @@ func (g *generateAdapterChain) Apply(fs *afero.Afero, data entity.Config) (*afer
 				return nil, err
 			}
 
-			generated, err := generate(transactorFilePath, transactorTmpl, adapter)
-			if err != nil {
-				return nil, err
-			}
+			if adapter.IsTransactional() {
+				generated, err := generate(transactorFilePath, transactorTmpl, adapter)
+				if err != nil {
+					return nil, err
+				}
 
-			err = fs.WriteFile(storageFolderPath+"/transactor.go.tmpl", generated, 0644)
-			if err != nil {
-				return nil, err
+				err = fs.WriteFile(storageFolderPath+"/transactor.go.tmpl", generated, 0644)
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 
