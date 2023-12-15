@@ -68,7 +68,7 @@ And you can see `pong` for your `ping`.
 
 You can get more details from the Youtube video (in Russian):
 
-[Архитектура Go проекта на практике](https://www.youtube.com/watch?v=hDwqFRUuykQ)
+[![Архитектура Go проекта на практике](https://img.youtube.com/vi/hDwqFRUuykQ/0.jpg)](https://www.youtube.com/watch?v=hDwqFRUuykQ)
 
 # Layout
 
