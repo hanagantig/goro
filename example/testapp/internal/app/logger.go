@@ -6,15 +6,12 @@ package app
 // Editing this file might prove futile when you re-run the goro commands
 
 import (
-	"log"
 	"testapp/pkg/logger"
 )
 
 func (a *App) initLogger() {
-	l, err := logger.NewLogger()
-	if err != nil {
-		log.Fatal(err)
-	}
+
+	l := logger.NewLogger()
 
 	a.logger = l
 }

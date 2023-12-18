@@ -8,7 +8,7 @@ package app
 import (
 	"fmt"
 	"github.com/hanagantig/gracy"
-	"go.uber.org/zap"
+	"log/slog"
 	client "net/http"
 	"testapp/internal/handler/http"
 	"testapp/internal/handler/http/api/v1"
@@ -21,7 +21,7 @@ func (a *App) StartHTTPServer() error {
 
 	err := gracy.Wait()
 	if err != nil {
-		a.logger.Error("failed to gracefully shutdown server", zap.Error(err))
+		a.logger.Error("failed to gracefully shutdown server", slog.String("err", err.Error()))
 		return err
 	}
 	a.logger.Info("server gracefully stopped")
@@ -49,7 +49,11 @@ func (a *App) startHTTPServer() {
 	a.logger.Info(fmt.Sprintf("starting HTTP server at %s:%s", a.cfg.HTTP.Host, a.cfg.HTTP.Port))
 	err := srv.Start()
 	if err != nil {
-		a.logger.Fatal("Fail to start %s http server:", zap.String("app", a.cfg.App.Name), zap.Error(err))
+		a.logger.Error(
+			"Fail to start %s http server:",
+			slog.String("app", a.cfg.App.Name),
+			slog.String("err", err.Error()),
+		)
 	}
 }
 

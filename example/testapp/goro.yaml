@@ -3,6 +3,9 @@ app:
   module: testapp
   work_dir: ""
 
+# Set one of supported loggers: [ "zap" , "slog" ]
+logger: slog 
+
 storages:
   - mysql
   - mysqlx

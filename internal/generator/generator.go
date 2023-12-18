@@ -83,6 +83,13 @@ func (g *Generator) loadChunks() error {
 		g.config.Chunks = append(g.config.Chunks, ch)
 	}
 
+	ch, ok := supportedChunks[g.config.Logger.String()]
+	if !ok {
+		return fmt.Errorf("%w: %v", UnsupportedChunkErr, g.config.Logger.String())
+	}
+
+	g.config.Chunks = append(g.config.Chunks, ch)
+
 	return nil
 }
 

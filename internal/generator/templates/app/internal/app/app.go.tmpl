@@ -9,16 +9,11 @@ import (
 	"sync"
 	"errors"
     {{ renderImports "storage" "definition" . }}
+    {{ renderImports "logger" "definition" . }}
 	"{{ .App.Module }}/internal/config"
-	"go.uber.org/zap/zapcore"
 )
 
-type Logger interface {
-	Debug(string, ...zapcore.Field)
-	Info(string, ...zapcore.Field)
-	Error(string, ...zapcore.Field)
-	Fatal(string, ...zapcore.Field)
-}
+{{ renderPkgInterface "logger" . }}
 
 type App struct {
 	cfg config.Config

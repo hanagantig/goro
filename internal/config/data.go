@@ -18,6 +18,7 @@ type Config struct {
 	Storages Storages `yaml:"storages"`
 	Services Services `yaml:"services"`
 	Adapters Adapters `yaml:"adapters"`
+	Logger   Logger   `yaml:"logger"`
 	Chunks   []Chunk
 }
 
@@ -32,6 +33,7 @@ type Chunk struct {
 	Build             string
 	Configs           string
 	InitConfig        string
+	PkgInterface      string
 	InitHasErr        bool
 }
 

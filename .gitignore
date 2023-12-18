@@ -1,6 +1,7 @@
 # ide
 .idea
-
+# binary
+/bin
 # development
 .env
 .DS_Store
