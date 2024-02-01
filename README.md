@@ -70,6 +70,8 @@ You can get more details from the Youtube video (in Russian):
 
 [![Архитектура Go проекта на практике](https://img.youtube.com/vi/hDwqFRUuykQ/0.jpg)](https://www.youtube.com/watch?v=hDwqFRUuykQ)
 
+You can also access the slides from the video through [this link](https://docs.google.com/presentation/d/1mDeRz5Sym0MiFYAVWd7Qen3sgVkGWnxR_PQ0bbDzEzo/edit?usp=sharing) from the video
+
 # Layout
 
 ![Layout schema](assets/img/layout.png?raw=true "layout")
