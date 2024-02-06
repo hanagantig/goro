@@ -1,17 +1,24 @@
 package logger
 
 import (
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+	"context"
+	"log/slog"
+	"os"
 )
 
 type Logger interface {
-	Debug(string, ...zapcore.Field)
-	Info(string, ...zapcore.Field)
-	Error(string, ...zapcore.Field)
-	Fatal(string, ...zapcore.Field)
+	Debug(string, ...any)
+	DebugContext(context.Context, string, ...any)
+	Info(string, ...any)
+	InfoContext(context.Context, string, ...any)
+	Error(string, ...any)
+	ErrorContext(context.Context, string, ...any)
+	Warn(string, ...any)
+	WarnContext(context.Context, string, ...any)
 }
 
-func NewLogger() (*zap.Logger, error) {
-	return zap.NewProduction()
+func NewLogger() *slog.Logger {
+	handler := slog.NewJSONHandler(os.Stdout, nil)
+
+	return slog.New(handler)
 }

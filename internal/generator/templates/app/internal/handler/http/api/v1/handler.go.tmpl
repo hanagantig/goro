@@ -2,8 +2,9 @@ package v1
 
 import (
 	"context"
-	"{{ .App.Module }}/pkg/logger"
+  "{{ .App.Module }}/pkg/logger"
 )
+
 
 type UseCase interface {
     {{range $val := .UseCase.Methods}}{{toCamelCase $val}}(ctx context.Context) (interface{}, error)

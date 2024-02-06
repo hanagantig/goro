@@ -11,17 +11,20 @@ import (
 )
 
 var FuncMap = template.FuncMap{
-	"renderImports":                     RenderImports,
-	"renderDefinition":                  RenderDefinitions,
-	"renderInitializationsWithError":    RenderInitializationsWithError,
-	"renderInitializationsWithoutError": RenderInitializationsWithoutError,
-	"renderStructPopulation":            RenderStructPopulation,
-	"renderArgs":                        RenderArgs,
-	"renderBuild":                       RenderBuild,
-	"toCamelCase":                       strcase.ToCamel,
-	"toPrivateName":                     ToPrivateName,
-	"toPublicName":                      ToPublicName,
-	"contains":                          strings.Contains,
+	"renderImports":                          RenderImports,
+	"renderPkgInterface":                     RenderPkgInterface,
+	"renderDefinition":                       RenderDefinitions,
+	"renderInitializationsWithError":         RenderInitializationsWithError,
+	"renderInitializationsWithFatalError":    RenderInitializationsWithFatalError,
+	"renderInitializationsWithoutError":      RenderInitializationsWithoutError,
+	"renderSmallInitializationsWithoutError": RenderSmallInitializationsWithoutError,
+	"renderStructPopulation":                 RenderStructPopulation,
+	"renderArgs":                             RenderArgs,
+	"renderBuild":                            RenderBuild,
+	"toCamelCase":                            strcase.ToCamel,
+	"toPrivateName":                          ToPrivateName,
+	"toPublicName":                           ToPublicName,
+	"contains":                               strings.Contains,
 }
 
 func RenderImports(scope, stage string, cfg entity.Config) string {
@@ -36,6 +39,16 @@ func RenderImports(scope, stage string, cfg entity.Config) string {
 		default:
 			fmt.Fprintf(&res, "%v\n", ch.DefinitionImports)
 		}
+	}
+
+	return res.String()
+}
+
+func RenderPkgInterface(scope string, cfg entity.Config) string {
+	chunks := cfg.GetChunksByScope(scope)
+	res := strings.Builder{}
+	for _, ch := range chunks {
+		fmt.Fprintf(&res, "%v\n", ch.PkgInterface)
 	}
 
 	return res.String()
@@ -63,12 +76,33 @@ func RenderInitializationsWithError(scope, prefix string, cfg entity.Config) str
 	return res.String()
 }
 
+func RenderInitializationsWithFatalError(scope, prefix string, cfg entity.Config) string {
+	chunks := cfg.GetChunksByScopeAndInitHasErr(scope)
+	res := strings.Builder{}
+	for _, ch := range chunks {
+		fmt.Fprintf(&res, "%v,%v := %v.%v(%v)\n", ch.ArgName, "err", prefix, ch.InitFunc, ch.InitConfig)
+		fmt.Fprintf(&res, "if err != nil {\n log.Fatal(err)\n}\n")
+	}
+
+	return res.String()
+}
+
 func RenderInitializationsWithoutError(scope, prefix string, cfg entity.Config) string {
 	chunks := cfg.GetChunksByScopeAndInitHasNotErr(scope)
 	res := strings.Builder{}
 	for _, ch := range chunks {
 		fmt.Fprintf(&res, "%v := %v.%v(%v)\n", ch.ArgName, prefix, ch.InitFunc, ch.InitConfig)
 		fmt.Fprintf(&res, "%v.%v = %v\n", prefix, ch.Name, ch.ArgName)
+	}
+
+	return res.String()
+}
+
+func RenderSmallInitializationsWithoutError(scope, prefix string, cfg entity.Config) string {
+	chunks := cfg.GetChunksByScopeAndInitHasNotErr(scope)
+	res := strings.Builder{}
+	for _, ch := range chunks {
+		fmt.Fprintf(&res, "%v := %v.%v(%v)\n", ch.ArgName, prefix, ch.InitFunc, ch.InitConfig)
 	}
 
 	return res.String()

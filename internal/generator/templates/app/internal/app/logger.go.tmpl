@@ -6,15 +6,15 @@ package app
 // Editing this file might prove futile when you re-run the goro commands
 
 import (
+  {{ if eq .Logger.String "zap"}}
 	"log"
+  {{end}}
 	"{{ .App.Module }}/pkg/logger"
 )
 
 func (a *App) initLogger() {
-	l, err := logger.NewLogger()
-	if err != nil {
-		log.Fatal(err)
-	}
+  {{ renderInitializationsWithFatalError "logger" "logger" . }}
+  {{ renderSmallInitializationsWithoutError "logger" "logger" . }}
 
 	a.logger = l
 }

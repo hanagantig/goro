@@ -57,5 +57,9 @@ func (c *Config) Validate() error {
 		}
 	}
 
+	if _, ok := supportedLoggers[c.Logger]; !ok {
+		return fmt.Errorf("unsupported logger '%v'", c.Logger.String())
+	}
+
 	return nil
 }
