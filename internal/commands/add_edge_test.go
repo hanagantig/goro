@@ -30,6 +30,17 @@ func TestAddEdgeLayouts(t *testing.T) {
 				cfg.UseCase.Methods = append(cfg.UseCase.Methods, "SignOut")
 			},
 		},
+		{
+			// Both inserts go after the last line: the adapter has to stay in adapters.
+			name: "no storages key and an empty adapters key at the end",
+			yaml: minimalApp + "\nadapters:\n",
+			steps: []addStep{step("add adapter AuditAPI --storage http --methods Send",
+				addsAdapter(config.Adapter{Name: "AuditAPI", Storage: "http", Methods: []string{"Send"}}))},
+			want: func(cfg *config.Config) {
+				cfg.Storages = config.Storages{"http"}
+				cfg.Adapters = config.Adapters{{Name: "AuditAPI", Storage: "http", Methods: []string{"Send"}}}
+			},
+		},
 	}
 
 	for _, c := range cases {

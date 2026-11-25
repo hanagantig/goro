@@ -285,3 +285,14 @@ func TestSetScalarRefusesAnchorsAndTags(t *testing.T) {
 		}
 	}
 }
+
+// TestInsertsAfterTheSameLine: when two edits go after the same line, the lines that belong inside
+// the node ending there come first, then a key appended to the mapping around it, whatever the
+// order of the calls.
+func TestInsertsAfterTheSameLine(t *testing.T) {
+	d := parse(t, "app:\n  name: demo\n\nadapters:\n")
+	k := keyNode(t, d, d.Root(), "adapters")
+	check(t, d.InsertField(d.Root(), "storages", List{"http"}))
+	check(t, d.Fill(k, List{Map{{"name", "X"}, {"storage", "http"}}}))
+	assertText(t, d, "app:\n  name: demo\n\nadapters:\n  - name: X\n    storage: http\n\nstorages:\n  - http\n")
+}
