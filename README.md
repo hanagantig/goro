@@ -40,7 +40,7 @@ Starting a new Golang project often involves setting up a project layout and def
 Give GORO a try and experience a faster, more efficient start to your Golang projects.
 
 ## Getting started
-To install GORO, run:
+GORO needs Go 1.26 or newer. To install it, run:
 ```bash
 go install github.com/hanagantig/goro@latest
 ```
