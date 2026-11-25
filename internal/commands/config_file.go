@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strings"
 
 	"gopkg.in/yaml.v3"
 
@@ -24,7 +23,8 @@ const configName = "goro.yaml"
 type configFile struct {
 	// path is where the file goes.
 	path string
-	// shown names the file in the output: its path relative to the work dir when it is inside.
+	// shown names the file in the output: "goro.yaml" for init's copy in the work dir, the path as
+	// given, cleaned, for a goro.yaml the user pointed goro to.
 	shown string
 	// action is ActionCreate, ActionOverwrite or ActionUnchanged.
 	action  Action
@@ -97,23 +97,9 @@ func writeWhole(path string, content []byte) error {
 	return os.Rename(tmp.Name(), target)
 }
 
-// shownPath returns path relative to workDir, slash-separated, when it is inside workDir, and
-// path as it is otherwise.
-func shownPath(path, workDir string) string {
-	absPath, err := filepath.Abs(path)
-	if err != nil {
-		return path
-	}
-	absDir, err := filepath.Abs(workDir)
-	if err != nil {
-		return path
-	}
-	rel, err := filepath.Rel(absDir, absPath)
-	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return path
-	}
-
-	return filepath.ToSlash(rel)
+// givenPath names path, a goro.yaml the user pointed goro to, in the output: as given, cleaned.
+func givenPath(path string) string {
+	return filepath.ToSlash(filepath.Clean(path))
 }
 
 // initConfigFile returns the goro.yaml that init leaves in the project root (ADR 0002), or nil
@@ -152,7 +138,7 @@ func initConfigFile(cfg config.Config) (*configFile, error) {
 		if bytes.Equal(content, source) {
 			return nil, nil
 		}
-		return &configFile{path: target, shown: configName, action: ActionOverwrite, current: source, content: content}, nil
+		return &configFile{path: target, shown: givenPath(cfg.Path), action: ActionOverwrite, current: source, content: content}, nil
 	}
 
 	f := &configFile{path: target, shown: configName, action: ActionCreate, content: content}

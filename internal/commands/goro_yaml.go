@@ -80,7 +80,7 @@ func (g *goroYaml) save(opts Options, added string, edit func() error) (Report, 
 
 	conf := &configFile{
 		path:    g.path,
-		shown:   shownPath(g.path, g.cfg.App.WorkDir),
+		shown:   givenPath(g.path),
 		action:  ActionOverwrite,
 		current: g.data,
 		content: content,
