@@ -136,7 +136,13 @@ func exists(dir, rel string) bool {
 
 // handEdit appends user code to a Go file's content.
 func handEdit(content string) string {
-	return content + "\n// handWritten is user code that goro update must keep.\nfunc handWritten() string { return \"kept\" }\n"
+	return handEditFunc(content, "handWritten")
+}
+
+// handEditFunc appends a user function called name to a Go file's content. Use a different name
+// per file of one package when the result has to build.
+func handEditFunc(content, name string) string {
+	return content + "\n// " + name + " is user code that goro update must keep.\nfunc " + name + "() string { return \"kept\" }\n"
 }
 
 // hasMarker reports whether a marker line comes before the package clause.
@@ -298,27 +304,53 @@ func assertNoChanges(t *testing.T, before, after map[string]entry) {
 	}
 }
 
-// assertMarkedFilesMatchFreshInit checks that every marked file a fresh init with cfg writes is
-// the same in dir, which is what regenerating every marked file means.
-func assertMarkedFilesMatchFreshInit(t *testing.T, dir string, cfg config.Config) {
+// assertMatchesFreshInit compares dir with a fresh init from cfg. Every file the fresh init
+// writes must exist in dir, so update creates what a new goro.yaml entry needs. Every marked
+// file must be the same, which is what regenerating every marked file means.
+func assertMatchesFreshInit(t *testing.T, dir string, cfg config.Config) {
 	t.Helper()
 
 	fresh := cfg
 	fresh.App.WorkDir = t.TempDir()
 	initProject(t, fresh)
 
-	for path, e := range snapshot(t, fresh.App.WorkDir) {
-		if e.isDir || !hasMarker(e.content) {
+	freshFiles := snapshot(t, fresh.App.WorkDir)
+	paths := make([]string, 0, len(freshFiles))
+	for path := range freshFiles {
+		paths = append(paths, path)
+	}
+	sort.Strings(paths)
+
+	for _, path := range paths {
+		e := freshFiles[path]
+		if e.isDir {
 			continue
 		}
 
 		got, err := os.ReadFile(filepath.Join(dir, filepath.FromSlash(path)))
 		if err != nil {
-			t.Errorf("marked file %s: %v", path, err)
+			t.Errorf("%s, which a fresh init with the same goro.yaml writes, is missing: %v", path, err)
 			continue
 		}
-		if string(got) != e.content {
+		if hasMarker(e.content) && string(got) != e.content {
 			t.Errorf("marked file %s differs from a fresh init with the same goro.yaml", path)
+		}
+	}
+}
+
+// assertNothingDeleted fails for every file or directory of before that is missing in after.
+func assertNothingDeleted(t *testing.T, before, after map[string]entry) {
+	t.Helper()
+
+	paths := make([]string, 0, len(before))
+	for path := range before {
+		paths = append(paths, path)
+	}
+	sort.Strings(paths)
+
+	for _, path := range paths {
+		if _, ok := after[path]; !ok {
+			t.Errorf("%s was deleted", path)
 		}
 	}
 }

@@ -13,24 +13,28 @@ import (
 
 // Rules under test: ADR 0001, generated and user-owned files; update never deletes.
 
-func TestUpdateKeepsHandEditsInMethodFiles(t *testing.T) {
+func TestUpdateKeepsHandEditsInUserOwnedFiles(t *testing.T) {
 	dir := t.TempDir()
 	initProject(t, newConfig(t, dir))
 
-	methodFiles := []string{
+	userFiles := []string{
+		// Method files.
 		"internal/usecase/sign_in.go",
 		"internal/service/users/create.go",
 		"internal/adapter/mysqlrepo/userrepo/get_by_id.go",
+		// Other user-owned files; handler.go's template reads use_case.methods.
+		"internal/handler/http/api/v1/handler.go",
+		"internal/config/config.go",
 	}
-	edited := make(map[string]string, len(methodFiles))
-	for _, path := range methodFiles {
+	edited := make(map[string]string, len(userFiles))
+	for _, path := range userFiles {
 		edited[path] = handEdit(readFile(t, dir, path))
 		writeFile(t, dir, path, edited[path])
 	}
 
 	update(t, newConfig(t, dir))
 
-	for _, path := range methodFiles {
+	for _, path := range userFiles {
 		t.Run(path, func(t *testing.T) {
 			if !exists(dir, path) {
 				t.Fatalf("%s was deleted", path)
@@ -54,14 +58,15 @@ func TestUpdateKeepsUnlistedCodeAndReportsOrphans(t *testing.T) {
 	for path, content := range handMade {
 		writeFile(t, dir, path, content)
 	}
-	// Code goro made for what the edited goro.yaml no longer lists.
-	keep := map[string]string{
+	// User code for what the edited goro.yaml no longer lists.
+	userCode := map[string]string{
 		"internal/usecase/sign_up.go":        readFile(t, dir, "internal/usecase/sign_up.go"),
 		"internal/service/billing/charge.go": readFile(t, dir, "internal/service/billing/charge.go"),
 	}
 	for path, content := range handMade {
-		keep[path] = content
+		userCode[path] = content
 	}
+	before := snapshot(t, dir)
 
 	// goro.yaml: drop the SignUp method and the Billing service.
 	cfg := newConfig(t, dir)
@@ -72,12 +77,12 @@ func TestUpdateKeepsUnlistedCodeAndReportsOrphans(t *testing.T) {
 	report := update(t, cfg)
 
 	t.Run("nothing is deleted", func(t *testing.T) {
-		for path, content := range keep {
-			if !exists(dir, path) {
-				t.Errorf("%s was deleted", path)
-				continue
-			}
-			if readFile(t, dir, path) != content {
+		assertNothingDeleted(t, before, snapshot(t, dir))
+	})
+
+	t.Run("user code is unchanged", func(t *testing.T) {
+		for path, content := range userCode {
+			if exists(dir, path) && readFile(t, dir, path) != content {
 				t.Errorf("%s was changed", path)
 			}
 		}
@@ -100,6 +105,7 @@ func TestUpdateKeepsUnlistedCodeAndReportsOrphans(t *testing.T) {
 		if container := readFile(t, dir, "internal/app/container.go"); strings.Contains(container, "billing") {
 			t.Errorf("container.go still wires the removed Billing service")
 		}
+		assertMatchesFreshInit(t, dir, cfg)
 	})
 }
 
@@ -121,7 +127,7 @@ func TestUpdateRegeneratesMarkedFiles(t *testing.T) {
 		}
 		assertAction(t, report, "internal/app/app.go", commands.ActionOverwrite)
 		assertAction(t, report, "internal/app/database.go", commands.ActionOverwrite)
-		assertMarkedFilesMatchFreshInit(t, dir, cfg)
+		assertMatchesFreshInit(t, dir, cfg)
 	})
 
 	t.Run("after adding a service dependency service.go and container.go agree", func(t *testing.T) {
@@ -140,7 +146,7 @@ func TestUpdateRegeneratesMarkedFiles(t *testing.T) {
 		}
 		assertAction(t, report, "internal/service/users/service.go", commands.ActionOverwrite)
 		assertAction(t, report, "internal/app/container.go", commands.ActionOverwrite)
-		assertMarkedFilesMatchFreshInit(t, dir, cfg)
+		assertMatchesFreshInit(t, dir, cfg)
 	})
 }
 
@@ -181,6 +187,29 @@ func TestUpdateSkipsUnmarkedFileAtGeneratedPath(t *testing.T) {
 		}
 		if exists(dir, "internal/service/users/dep_audit_repo.go") {
 			t.Errorf("update created dep_audit_repo.go next to a user-owned service.go, which would declare the interface twice")
+		}
+		assertAction(t, report, path, commands.ActionSkipUnmarked)
+	})
+
+	t.Run("usecase.go without the marker gets no new dep files", func(t *testing.T) {
+		dir := t.TempDir()
+		initProject(t, newConfig(t, dir))
+
+		const path = "internal/usecase/usecase.go"
+		owned := handEdit(removeMarker(readFile(t, dir, path)))
+		writeFile(t, dir, path, owned)
+
+		// goro.yaml: the use case depends on a new Notifier service.
+		cfg := newConfig(t, dir)
+		cfg.Services = append(cfg.Services, config.Service{Name: "Notifier", Methods: []string{"Send"}})
+		cfg.UseCase.Deps = append(cfg.UseCase.Deps, "Notifier")
+		report := update(t, cfg)
+
+		if readFile(t, dir, path) != owned {
+			t.Errorf("update wrote %s, which has no marker", path)
+		}
+		if exists(dir, "internal/usecase/dep_notifier.go") {
+			t.Errorf("update created dep_notifier.go next to a user-owned usecase.go, which would declare the interface twice")
 		}
 		assertAction(t, report, path, commands.ActionSkipUnmarked)
 	})
@@ -291,6 +320,7 @@ func TestDependencyInterfacesLiveInDepFiles(t *testing.T) {
 			}
 			assertAction(t, report, c.path, commands.ActionCreate)
 		}
+		assertMatchesFreshInit(t, dir, cfg)
 	})
 }
 
