@@ -14,9 +14,10 @@ var initCmd = &cobra.Command{
 --config names. It asks for the app name and the work dir when goro.yaml leaves them empty; a
 relative work_dir counts from the directory that holds goro.yaml.
 
-Init saves a copy of goro.yaml in the work dir, the project root, with work_dir: ., so that
-update and add find it there. It refuses a work dir that holds a goro project already, or a
-different goro.yaml.`,
+Init saves a copy of goro.yaml in the work dir, the project root, with work_dir: . and the app
+name if it asked for one, so that update and add find it there. When goro.yaml is in the work dir
+already, init writes what it asked for into that file instead. It refuses a work dir that holds a
+goro project already, or a different goro.yaml.`,
 	Example: `  goro init --config ~/templates/goro.yaml`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg, err := commands.LoadConfig(goroCnf)

@@ -64,11 +64,15 @@ func shownPath(path, workDir string) string {
 	return filepath.ToSlash(rel)
 }
 
-// initConfigFile returns the goro.yaml that init saves in the project root: a copy of the config
-// it read, with the app name cfg holds when that config has none (see projectGoroYaml). It
-// returns nil when there is nothing to save, because the config wasn't read from a file or is the
-// project's goro.yaml itself. A different goro.yaml in the project root is an error: init never
-// overwrites a file.
+// initConfigFile returns the goro.yaml that init leaves in the project root (ADR 0002), or nil
+// when there is nothing to write:
+//
+//   - for a config from outside the project, a copy in the project root with work_dir: . and
+//     the app name cfg holds when the config has none (see rootGoroYaml). A different goro.yaml
+//     in the project root is an error: init never overwrites a file;
+//   - for the project's own goro.yaml, that file with what LoadConfig had to ask for filled in:
+//     work_dir: . and the app name; nil when it gives both;
+//   - nil for a config that wasn't read from a file.
 func initConfigFile(cfg config.Config) (*configFile, error) {
 	if cfg.Path == "" {
 		return nil, nil
@@ -76,7 +80,7 @@ func initConfigFile(cfg config.Config) (*configFile, error) {
 
 	target := filepath.Join(cfg.App.WorkDir, configName)
 	same, err := sameFile(cfg.Path, target)
-	if err != nil || same {
+	if err != nil {
 		return nil, err
 	}
 
@@ -84,9 +88,19 @@ func initConfigFile(cfg config.Config) (*configFile, error) {
 	if err != nil {
 		return nil, err
 	}
-	content, err := projectGoroYaml(source, cfg.Path, cfg.App.Name)
+	content, err := rootGoroYaml(source, cfg.Path, cfg.App.Name, !same)
 	if err != nil {
+		if same {
+			return nil, fmt.Errorf("init: can't fill in work_dir and name in %s: %w", cfg.Path, err)
+		}
 		return nil, fmt.Errorf("init: can't save a copy of %s in the project root: %w", cfg.Path, err)
+	}
+
+	if same {
+		if bytes.Equal(content, source) {
+			return nil, nil
+		}
+		return &configFile{path: target, shown: configName, action: ActionOverwrite, current: source, content: content}, nil
 	}
 
 	f := &configFile{path: target, shown: configName, action: ActionCreate, content: content}
@@ -123,14 +137,19 @@ func sameFile(a, b string) (bool, error) {
 	return os.SameFile(ai, bi), nil
 }
 
-// projectGoroYaml returns source, the goro.yaml at path outside the project, as init saves it in
-// the project root: the same text with app.work_dir set to ".", and app.name set to name when
-// source has none, which is the answer to LoadConfig's question. Each is set in place, or
-// inserted after the last key of app.
-func projectGoroYaml(source []byte, path, name string) ([]byte, error) {
+// rootGoroYaml returns source, the goro.yaml at path, as init leaves it in the project root:
+// app.name set to name when source has none, which is the answer to LoadConfig's question, and
+// app.work_dir set to "." when source has none, or always for a copy from outside the project.
+// Each is set in place, or inserted after the last key of app; every other byte stays.
+func rootGoroYaml(source []byte, path, name string, outside bool) ([]byte, error) {
 	want, err := config.ParseConfig(source, path)
 	if err != nil {
 		return nil, err
+	}
+	setName := want.App.Name == ""
+	setWorkDir := outside || want.App.WorkDir == ""
+	if !setName && !setWorkDir {
+		return source, nil
 	}
 
 	doc, err := yamledit.Parse(source)
@@ -145,17 +164,19 @@ func projectGoroYaml(source []byte, path, name string) ([]byte, error) {
 		return nil, errors.New("app is a flow mapping, such as {name: demo}; write it as a block mapping, one key per line")
 	}
 
-	if want.App.Name == "" {
+	if setName {
 		if err := doc.SetScalar(app, "name", name); err != nil {
 			return nil, fmt.Errorf("set app.name: %w", err)
 		}
 		want.App.Name = name
 	}
-	if err := doc.SetScalar(app, "work_dir", "."); err != nil {
-		return nil, fmt.Errorf("set app.work_dir: %w", err)
+	if setWorkDir {
+		if err := doc.SetScalar(app, "work_dir", "."); err != nil {
+			return nil, fmt.Errorf("set app.work_dir: %w", err)
+		}
+		want.App.WorkDir = filepath.Dir(path)
 	}
 	content := doc.Bytes()
-	want.App.WorkDir = filepath.Dir(path)
 
 	return content, checkEdit(content, path, want)
 }

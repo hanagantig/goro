@@ -11,9 +11,10 @@ import (
 // already holds a goro project with ErrProjectExists. A work dir that holds other files, such as
 // goro.yaml, is fine.
 //
-// Init also saves goro.yaml in the project root, where update and add read it (ADR 0002): a copy
-// of the config at cfg.Path with work_dir: ., unless cfg.Path is that file already. It refuses a
-// project root that holds a different goro.yaml.
+// Init also leaves goro.yaml in the project root, where update and add read it (ADR 0002): a copy
+// of the config at cfg.Path with work_dir: ., or, when cfg.Path is that file already, the file
+// with what LoadConfig had to ask for filled in. It refuses a project root that holds a different
+// goro.yaml.
 func Init(cfg config.Config, opts Options) error {
 	err := cfg.Validate()
 	if err != nil {
