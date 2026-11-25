@@ -1,27 +1,33 @@
-# goro.yaml of the demo service. goro add edits this file and keeps
-# its comments and key order.
+# goro.yaml of the demo service. goro add edits this file in place: it only
+# inserts lines, so blank lines, comments and layout stay as they are.
+
 app:
   name: demo
   module: demo
   work_dir: . # the project, relative to this file
+
+# Databases and clients the adapters use.
 storages:
   - mysql
   - pgsqlx
+  # - pgsqlx
+
 use_case:
   deps:
     - Users
+
   # One file per method in internal/usecase.
   methods:
     - SignIn
     - Pong # the /ping handler that init generates calls it
     - SignOut
+
 services:
   # Users owns the accounts.
   - name: Users
     methods:
       - Create
-    deps:
-      - UserRepo
+    deps: [UserRepo]
   - name: Billing
     methods:
       - Charge
@@ -29,6 +35,7 @@ services:
       - Void
     deps:
       - PaymentsRepo
+
 adapters:
   - name: UserRepo # the users table
     storage: mysql
@@ -39,4 +46,5 @@ adapters:
     storage: pgsqlx
     methods:
       - Save
+
 # Keep this file in the project root.

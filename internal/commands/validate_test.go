@@ -9,10 +9,11 @@ import (
 	"github.com/hanagantig/goro/internal/config"
 )
 
-// TestUpdateRejectsClashingNames: names are unique across services and adapters, and a method's
-// file can't be a dep file. update refuses such a goro.yaml, names the value at fault and writes
-// nothing.
-func TestUpdateRejectsClashingNames(t *testing.T) {
+// TestUpdateRejectsBadConfig: service and adapter names follow the method name rule and are unique
+// across services and adapters, a method's file can't be a dep file or a file goro owns, and
+// every storage is one goro supports. update refuses a goro.yaml that breaks a rule, names the
+// value at fault and writes nothing.
+func TestUpdateRejectsBadConfig(t *testing.T) {
 	cases := []struct {
 		name  string
 		edit  func(cfg *config.Config)
@@ -50,15 +51,60 @@ func TestUpdateRejectsClashingNames(t *testing.T) {
 		{
 			// DepUserRepo would get internal/service/users/dep_user_repo.go, the dep file of
 			// UserRepo.
-			name: "a service method whose file is a dep file",
-			edit: func(cfg *config.Config) {
-				for i := range cfg.Services {
-					if cfg.Services[i].Name == "Users" {
-						cfg.Services[i].Methods = append(cfg.Services[i].Methods, "DepUserRepo")
-					}
-				}
-			},
+			name:  "a service method whose file is a dep file",
+			edit:  func(cfg *config.Config) { addServiceMethod(cfg, "Users", "DepUserRepo") },
 			inErr: "DepUserRepo",
+		},
+		{
+			name: "a service name that doesn't start with a capital letter",
+			edit: func(cfg *config.Config) {
+				cfg.Services = append(cfg.Services, config.Service{Name: "notifier", Methods: []string{"Send"}})
+			},
+			inErr: "notifier",
+		},
+		{
+			name: "an adapter name with a character other than a letter",
+			edit: func(cfg *config.Config) {
+				cfg.Adapters = append(cfg.Adapters, config.Adapter{Name: "AuditRepo2", Storage: "mysql"})
+			},
+			inErr: "AuditRepo2",
+		},
+		{
+			// Usecase would get internal/usecase/usecase.go, which goro owns.
+			name: "a use case method whose file is goro's",
+			edit: func(cfg *config.Config) {
+				cfg.UseCase.Methods = append(cfg.UseCase.Methods, "Usecase")
+			},
+			inErr: "Usecase",
+		},
+		{
+			// Service would get internal/service/users/service.go, which goro owns.
+			name:  "a service method whose file is goro's",
+			edit:  func(cfg *config.Config) { addServiceMethod(cfg, "Users", "Service") },
+			inErr: "Service",
+		},
+		{
+			// Repository would get internal/adapter/mysqlrepo/userrepo/repository.go, which goro
+			// owns.
+			name:  "an adapter method whose file is goro's",
+			edit:  func(cfg *config.Config) { addAdapterMethod(cfg, "UserRepo", "Repository") },
+			inErr: "Repository",
+		},
+		{
+			// Transactor would get transactor.go, the name of goro's transactor files, and clash
+			// with the Transactor that a transactional adapter's Repository embeds.
+			name:  "an adapter method named like its transactor",
+			edit:  func(cfg *config.Config) { addAdapterMethod(cfg, "UserRepo", "Transactor") },
+			inErr: "Transactor",
+		},
+		{
+			// Passes today: rendering already fails on a storage without a chunk, before
+			// anything is written. It keeps that so when the check moves into validation.
+			name: "a storage goro doesn't support",
+			edit: func(cfg *config.Config) {
+				cfg.Storages = append(cfg.Storages, "mongo")
+			},
+			inErr: "mongo",
 		},
 	}
 
@@ -80,5 +126,21 @@ func TestUpdateRejectsClashingNames(t *testing.T) {
 			}
 			assertNoChanges(t, before, snapshot(t, dir))
 		})
+	}
+}
+
+func addServiceMethod(cfg *config.Config, service, method string) {
+	for i := range cfg.Services {
+		if cfg.Services[i].Name == service {
+			cfg.Services[i].Methods = append(cfg.Services[i].Methods, method)
+		}
+	}
+}
+
+func addAdapterMethod(cfg *config.Config, adapter, method string) {
+	for i := range cfg.Adapters {
+		if cfg.Adapters[i].Name == adapter {
+			cfg.Adapters[i].Methods = append(cfg.Adapters[i].Methods, method)
+		}
 	}
 }

@@ -47,6 +47,7 @@ func TestE2EInitAddBuild(t *testing.T) {
 	path := filepath.Join(project, "goro.yaml")
 	runAddSteps(t, path, commands.Options{Out: io.Discard})
 	assertGolden(t, path, "add/goro.golden.yaml")
+	assertOnlyInsertedLines(t, path)
 
 	build := exec.Command(goBin, "build", "./...")
 	build.Dir = project
