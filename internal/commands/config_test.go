@@ -247,3 +247,57 @@ func TestInitWithGoroYamlInProjectRoot(t *testing.T) {
 		}
 	})
 }
+
+// TestInitSavesTheAskedAppName: for a config without an app name LoadConfig asks for one, and
+// init's copy of goro.yaml has to hold the answer, because goro add never asks and refuses a
+// goro.yaml without app.name.
+func TestInitSavesTheAskedAppName(t *testing.T) {
+	const nameLine = "  name: demo\n"
+	base := readTestdata(t, "add/goro.yaml")
+	noName := strings.Replace(base, nameLine, "", 1)
+
+	cases := []struct {
+		name, source, want string
+	}{
+		{
+			// The line goes after the last key of app, at its indentation.
+			name:   "a config without a name key gets a name line",
+			source: noName,
+			want:   strings.Replace(noName, workDirLine, workDirLine+nameLine, 1),
+		},
+		{
+			name:   `a config with name: "" gets only that line changed`,
+			source: strings.Replace(base, nameLine, `  name: ""`+"\n", 1),
+			want:   base,
+		},
+		{
+			name:   "a config without name and work_dir gets both lines",
+			source: strings.Replace(noName, workDirLine, "", 1),
+			want:   strings.Replace(noName, workDirLine, nameLine+"  work_dir: .\n", 1),
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			source, project := outsideProject(t, c.source)
+			cfg := readWithWorkDir(t, source, project)
+			// The answer to LoadConfig's question.
+			cfg.App.Name = "demo"
+
+			if err := commands.Init(cfg, commands.Options{SkipGoMod: true, Out: io.Discard}); err != nil {
+				t.Fatalf("init: %v", err)
+			}
+			if !exists(project, "goro.yaml") {
+				t.Fatalf("init didn't save goro.yaml in the project root")
+			}
+			if got := readFile(t, project, "goro.yaml"); got != c.want {
+				t.Errorf("saved goro.yaml:\n%s\nwant:\n%s", got, c.want)
+			}
+			assertOnlyInsertedLines(t, strings.Replace(c.source, `name: ""`, "name: demo", 1), filepath.Join(project, "goro.yaml"))
+
+			// The first goro add works on the saved goro.yaml.
+			if _, err := commands.AddUseCase(filepath.Join(project, "goro.yaml"), "SignOut", addOpts); err != nil {
+				t.Errorf("add usecase SignOut on the saved goro.yaml: %v", err)
+			}
+		})
+	}
+}
