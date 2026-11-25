@@ -61,6 +61,8 @@ type layout struct {
 type insertion struct {
 	// after is the 1-based line the text goes after.
 	after int
+	// col is the indentation of the first line that isn't blank.
+	col   int
 	lines []string
 }
 
@@ -256,8 +258,15 @@ func (d *Document) Bytes() []byte {
 		lines[r.line-1] = l[:r.start] + r.text + l[r.end:]
 	}
 
+	// After the same line, lines that sit further right belong inside the node that ends there,
+	// so they go before lines for the nodes around it.
 	inserts := append([]insertion(nil), d.inserts...)
-	sort.SliceStable(inserts, func(i, j int) bool { return inserts[i].after < inserts[j].after })
+	sort.SliceStable(inserts, func(i, j int) bool {
+		if inserts[i].after != inserts[j].after {
+			return inserts[i].after < inserts[j].after
+		}
+		return inserts[i].col > inserts[j].col
+	})
 
 	var b strings.Builder
 	next := 0
@@ -281,7 +290,14 @@ func (d *Document) Bytes() []byte {
 }
 
 func (d *Document) insert(after int, lines []string) {
-	d.inserts = append(d.inserts, insertion{after: after, lines: lines})
+	col := 0
+	for _, l := range lines {
+		if !isBlank(l) {
+			col = indentOf(l)
+			break
+		}
+	}
+	d.inserts = append(d.inserts, insertion{after: after, col: col, lines: lines})
 }
 
 // end returns the last line of the text of n, which starts at column col: the line of its last
