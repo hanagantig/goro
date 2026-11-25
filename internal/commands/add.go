@@ -10,9 +10,15 @@ import (
 // (ADR 0002), and then run Update with opts on the result. They share these rules:
 //
 //   - they validate the change against the whole config first; a failure returns an error that
-//     names the value at fault and leaves both goro.yaml and the code as they are;
-//   - they edit goro.yaml in place and keep its comments and key order;
+//     names the value at fault, quoted or qualified ('Billing', Users.Void), and leaves both
+//     goro.yaml and the code as they are;
+//   - they edit goro.yaml in place by inserting lines only, so every existing line stays as it
+//     is; a missing key is inserted with its items, and a flow list ([a, b]) is refused with an
+//     error that names the file and the list by its path, such as use_case.methods or
+//     adapters.UserRepo.methods;
 //   - a relative work_dir in goro.yaml counts from the directory that holds it, as in LoadConfig;
+//   - they never prompt: a goro.yaml without app.name or app.work_dir is an error that says what
+//     to set;
 //   - under opts.DryRun they print what Update would do and write nothing, goro.yaml included.
 //
 // They return the Report of that Update.
@@ -41,7 +47,8 @@ func AddAdapter(configPath string, adapter config.Adapter, opts Options) (Report
 }
 
 // AddMethod adds a method to a service or an adapter. ref is "<Name>.<Method>", such as
-// "Billing.Void". It fails when Name is both a service and an adapter, or neither.
+// "Billing.Void"; any other form is an error. It fails when Name is both a service and an
+// adapter, or neither.
 // Not implemented yet: returns an error.
 func AddMethod(configPath, ref string, opts Options) (Report, error) {
 	return Report{}, errAddNotImplemented

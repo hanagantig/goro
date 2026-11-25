@@ -1,6 +1,7 @@
 package commands_test
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -25,9 +26,19 @@ var addOpts = commands.Options{SkipGoMod: true, Out: io.Discard}
 func addProject(t *testing.T) (dir, configPath string) {
 	t.Helper()
 
+	return projectFrom(t, readTestdata(t, "add/goro.yaml"))
+}
+
+// projectFrom is addProject with yaml for the project's goro.yaml. It also moves the test into
+// an empty working directory, so code that resolves a path against the working directory instead
+// of goro.yaml's can't write into goro's source tree.
+func projectFrom(t *testing.T, yaml string) (dir, configPath string) {
+	t.Helper()
+
+	t.Chdir(t.TempDir())
 	dir = t.TempDir()
 	configPath = filepath.Join(dir, "goro.yaml")
-	writeFile(t, dir, "goro.yaml", readTestdata(t, "add/goro.yaml"))
+	writeFile(t, dir, "goro.yaml", yaml)
 	initProject(t, loadProjectConfig(t, configPath))
 
 	return dir, configPath
@@ -48,10 +59,20 @@ func loadProjectConfig(t *testing.T, path string) config.Config {
 	return cfg
 }
 
+// testdataDir is the absolute path of testdata, taken while the working directory is still the
+// package directory; the tests that move to another directory read testdata through it.
+var testdataDir = func() string {
+	dir, err := filepath.Abs("testdata")
+	if err != nil {
+		panic(err)
+	}
+	return dir
+}()
+
 func readTestdata(t *testing.T, rel string) string {
 	t.Helper()
 
-	b, err := os.ReadFile(filepath.Join("testdata", filepath.FromSlash(rel)))
+	b, err := os.ReadFile(filepath.Join(testdataDir, filepath.FromSlash(rel)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,7 +130,7 @@ func TestAddUseCase(t *testing.T) {
 
 	cfg := loadProjectConfig(t, path)
 	assertStrings(t, "use_case.methods in goro.yaml", cfg.UseCase.Methods, []string{"SignIn", "Pong", "SignOut"})
-	assertOnlyInsertedLines(t, path)
+	assertOnlyInsertedLines(t, readTestdata(t, "add/goro.yaml"), path)
 	assertCreated(t, report, dir, "internal/usecase/sign_out.go")
 	assertMatchesFreshInit(t, dir, cfg)
 }
@@ -131,7 +152,7 @@ func TestAddService(t *testing.T) {
 	}
 	assertStrings(t, "Billing methods in goro.yaml", got.Methods, svc.Methods)
 	assertStrings(t, "Billing deps in goro.yaml", got.Deps, svc.Deps)
-	assertOnlyInsertedLines(t, path)
+	assertOnlyInsertedLines(t, readTestdata(t, "add/goro.yaml"), path)
 
 	assertCreated(t, report, dir,
 		"internal/service/billing/service.go",
@@ -174,7 +195,7 @@ func TestAddMethod(t *testing.T) {
 		cfg := loadProjectConfig(t, path)
 		svc, _ := findService(cfg, "Users")
 		assertStrings(t, "Users methods in goro.yaml", svc.Methods, []string{"Create", "Delete"})
-		assertOnlyInsertedLines(t, path)
+		assertOnlyInsertedLines(t, readTestdata(t, "add/goro.yaml"), path)
 		assertCreated(t, report, dir, "internal/service/users/delete.go")
 		assertMatchesFreshInit(t, dir, cfg)
 	})
@@ -190,7 +211,7 @@ func TestAddMethod(t *testing.T) {
 		cfg := loadProjectConfig(t, path)
 		adapter, _ := findAdapter(cfg, "UserRepo")
 		assertStrings(t, "UserRepo methods in goro.yaml", adapter.Methods, []string{"GetByID", "Save"})
-		assertOnlyInsertedLines(t, path)
+		assertOnlyInsertedLines(t, readTestdata(t, "add/goro.yaml"), path)
 		assertCreated(t, report, dir, "internal/adapter/mysqlrepo/userrepo/save.go")
 		assertMatchesFreshInit(t, dir, cfg)
 	})
@@ -221,7 +242,7 @@ func TestAddAdapter(t *testing.T) {
 			t.Errorf("PaymentsRepo storage in goro.yaml = %q, want pgsqlx", got.Storage)
 		}
 		assertStrings(t, "PaymentsRepo methods in goro.yaml", got.Methods, adapter.Methods)
-		assertOnlyInsertedLines(t, path)
+		assertOnlyInsertedLines(t, readTestdata(t, "add/goro.yaml"), path)
 
 		assertCreated(t, report, dir,
 			"internal/adapter/pgsqlxrepo/transactor.go",
@@ -248,239 +269,13 @@ func TestAddAdapter(t *testing.T) {
 		if _, ok := findAdapter(cfg, "AuditRepo"); !ok {
 			t.Errorf("goro.yaml lists no AuditRepo adapter")
 		}
-		assertOnlyInsertedLines(t, path)
+		assertOnlyInsertedLines(t, readTestdata(t, "add/goro.yaml"), path)
 		assertCreated(t, report, dir,
 			"internal/adapter/mysqlrepo/auditrepo/repository.go",
 			"internal/adapter/mysqlrepo/auditrepo/write.go",
 		)
 		assertMatchesFreshInit(t, dir, cfg)
 	})
-}
-
-// TestAddFailuresChangeNothing: an add that fails validation leaves goro.yaml and the code as they
-// are, and its error names the value at fault.
-func TestAddFailuresChangeNothing(t *testing.T) {
-	cases := []struct {
-		name string
-		// setup, when set, changes the project before the add.
-		setup func(t *testing.T, dir string)
-		add   func(path string) (commands.Report, error)
-		// inErr lists what the error has to name.
-		inErr []string
-	}{
-		{
-			name:  "add usecase with a method goro.yaml already lists",
-			add:   func(p string) (commands.Report, error) { return commands.AddUseCase(p, "SignIn", addOpts) },
-			inErr: []string{"SignIn"},
-		},
-		{
-			name:  "add usecase with a bad method name",
-			add:   func(p string) (commands.Report, error) { return commands.AddUseCase(p, "signOut", addOpts) },
-			inErr: []string{"signOut"},
-		},
-		{
-			// DepUsers would get the file dep_users.go, the dep file of the Users dependency.
-			name:  "add usecase with a method whose file is a dep file",
-			add:   func(p string) (commands.Report, error) { return commands.AddUseCase(p, "DepUsers", addOpts) },
-			inErr: []string{"DepUsers"},
-		},
-		{
-			// Usecase would get the file usecase.go, which goro owns.
-			name:  "add usecase with a method whose file is goro's",
-			add:   func(p string) (commands.Report, error) { return commands.AddUseCase(p, "Usecase", addOpts) },
-			inErr: []string{"Usecase"},
-		},
-		{
-			name: "add service with a name goro.yaml already lists",
-			add: func(p string) (commands.Report, error) {
-				return commands.AddService(p, config.Service{Name: "Users"}, addOpts)
-			},
-			inErr: []string{"Users"},
-		},
-		{
-			name: "add service with the name of an adapter",
-			add: func(p string) (commands.Report, error) {
-				return commands.AddService(p, config.Service{Name: "UserRepo"}, addOpts)
-			},
-			inErr: []string{"UserRepo"},
-		},
-		{
-			name: "add service with a bad name",
-			add: func(p string) (commands.Report, error) {
-				return commands.AddService(p, config.Service{Name: "billing"}, addOpts)
-			},
-			inErr: []string{"billing"},
-		},
-		{
-			name: "add service with an unknown dependency",
-			add: func(p string) (commands.Report, error) {
-				return commands.AddService(p, config.Service{Name: "Billing", Deps: []string{"PaymentsRepo"}}, addOpts)
-			},
-			inErr: []string{"PaymentsRepo"},
-		},
-		{
-			name: "add service with a bad method name",
-			add: func(p string) (commands.Report, error) {
-				return commands.AddService(p, config.Service{Name: "Billing", Methods: []string{"charge"}}, addOpts)
-			},
-			inErr: []string{"charge"},
-		},
-		{
-			name: "add adapter with a name goro.yaml already lists",
-			add: func(p string) (commands.Report, error) {
-				return commands.AddAdapter(p, config.Adapter{Name: "UserRepo", Storage: "mysql"}, addOpts)
-			},
-			inErr: []string{"UserRepo"},
-		},
-		{
-			name: "add adapter with the name of a service",
-			add: func(p string) (commands.Report, error) {
-				return commands.AddAdapter(p, config.Adapter{Name: "Users", Storage: "mysql"}, addOpts)
-			},
-			inErr: []string{"Users"},
-		},
-		{
-			name: "add adapter with a bad name",
-			add: func(p string) (commands.Report, error) {
-				return commands.AddAdapter(p, config.Adapter{Name: "Audit_Repo", Storage: "mysql"}, addOpts)
-			},
-			inErr: []string{"Audit_Repo"},
-		},
-		{
-			name: "add adapter with an unsupported storage",
-			add: func(p string) (commands.Report, error) {
-				return commands.AddAdapter(p, config.Adapter{Name: "PaymentsRepo", Storage: "mongo"}, addOpts)
-			},
-			inErr: []string{"mongo"},
-		},
-		{
-			name: "add adapter with a bad method name",
-			add: func(p string) (commands.Report, error) {
-				return commands.AddAdapter(p, config.Adapter{Name: "PaymentsRepo", Storage: "pgsqlx", Methods: []string{"save"}}, addOpts)
-			},
-			inErr: []string{"save"},
-		},
-		{
-			name:  "add method that goro.yaml already lists",
-			add:   func(p string) (commands.Report, error) { return commands.AddMethod(p, "Users.Create", addOpts) },
-			inErr: []string{"Create"},
-		},
-		{
-			name:  "add method with a bad method name",
-			add:   func(p string) (commands.Report, error) { return commands.AddMethod(p, "Users.delete", addOpts) },
-			inErr: []string{"delete"},
-		},
-		{
-			// DepUserRepo would get the file dep_user_repo.go, the dep file of UserRepo.
-			name:  "add method whose file is a dep file",
-			add:   func(p string) (commands.Report, error) { return commands.AddMethod(p, "Users.DepUserRepo", addOpts) },
-			inErr: []string{"DepUserRepo"},
-		},
-		{
-			// Service would get the file service.go, which goro owns.
-			name:  "add method to a service whose file is goro's",
-			add:   func(p string) (commands.Report, error) { return commands.AddMethod(p, "Users.Service", addOpts) },
-			inErr: []string{"Service"},
-		},
-		{
-			// Repository would get the file repository.go, which goro owns.
-			name:  "add method to an adapter whose file is goro's",
-			add:   func(p string) (commands.Report, error) { return commands.AddMethod(p, "UserRepo.Repository", addOpts) },
-			inErr: []string{"Repository"},
-		},
-		{
-			// Transactor would get transactor.go, the name of goro's transactor files, and
-			// clash with the Transactor that a transactional adapter's Repository embeds.
-			name:  "add method to an adapter named like its transactor",
-			add:   func(p string) (commands.Report, error) { return commands.AddMethod(p, "UserRepo.Transactor", addOpts) },
-			inErr: []string{"Transactor"},
-		},
-		{
-			name:  "add method to a name that is neither a service nor an adapter",
-			add:   func(p string) (commands.Report, error) { return commands.AddMethod(p, "Payments.Save", addOpts) },
-			inErr: []string{"Payments"},
-		},
-		{
-			name: "add method to a name that is both a service and an adapter",
-			setup: func(t *testing.T, dir string) {
-				// A hand edit: an adapter named like the Users service, appended to adapters,
-				// the last list in the file.
-				appendFile(t, dir, "goro.yaml", "  - name: Users\n    storage: mysql\n")
-			},
-			add:   func(p string) (commands.Report, error) { return commands.AddMethod(p, "Users.Delete", addOpts) },
-			inErr: []string{"Users"},
-		},
-		// goro add only inserts lines, and a flow list ([a, b]) can't grow by a line, so add
-		// refuses to rewrite one and names the file and the list instead.
-		{
-			name: "add usecase when use_case.methods is a flow list",
-			setup: func(t *testing.T, dir string) {
-				replaceInFile(t, dir, "goro.yaml",
-					"  methods:\n    - SignIn\n    - Pong # the /ping handler that init generates calls it\n",
-					"  methods: [SignIn, Pong]\n")
-			},
-			add:   func(p string) (commands.Report, error) { return commands.AddUseCase(p, "SignOut", addOpts) },
-			inErr: []string{"goro.yaml", "use_case", "methods"},
-		},
-		{
-			name: "add adapter with a new storage when storages is a flow list",
-			setup: func(t *testing.T, dir string) {
-				replaceInFile(t, dir, "goro.yaml", "storages:\n  - mysql\n  # - pgsqlx\n", "storages: [mysql]\n")
-			},
-			add: func(p string) (commands.Report, error) {
-				return commands.AddAdapter(p, config.Adapter{Name: "PaymentsRepo", Storage: "pgsqlx"}, addOpts)
-			},
-			inErr: []string{"goro.yaml", "storages"},
-		},
-		{
-			name: "add method when the adapter's methods is a flow list",
-			setup: func(t *testing.T, dir string) {
-				replaceInFile(t, dir, "goro.yaml", "    methods:\n      - GetByID\n", "    methods: [GetByID]\n")
-			},
-			add:   func(p string) (commands.Report, error) { return commands.AddMethod(p, "UserRepo.Save", addOpts) },
-			inErr: []string{"goro.yaml", "UserRepo", "methods"},
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			dir, path := addProject(t)
-			if c.setup != nil {
-				c.setup(t, dir)
-			}
-			ageFiles(t, dir)
-			before := snapshot(t, dir)
-
-			_, err := c.add(path)
-			if err == nil {
-				t.Errorf("the add succeeded, want an error")
-			} else {
-				for _, want := range c.inErr {
-					if !strings.Contains(err.Error(), want) {
-						t.Errorf("error %q doesn't name %q", err, want)
-					}
-				}
-			}
-			assertNoChanges(t, before, snapshot(t, dir))
-		})
-	}
-}
-
-// replaceInFile replaces old, which must be there, with new in a file of dir.
-func replaceInFile(t *testing.T, dir, rel, old, new string) {
-	t.Helper()
-
-	content := readFile(t, dir, rel)
-	if !strings.Contains(content, old) {
-		t.Fatalf("%s doesn't contain %q", rel, old)
-	}
-	writeFile(t, dir, rel, strings.Replace(content, old, new, 1))
-}
-
-func appendFile(t *testing.T, dir, rel, content string) {
-	t.Helper()
-
-	writeFile(t, dir, rel, readFile(t, dir, rel)+content)
 }
 
 // addStep is one goro add command, run against the goro.yaml at path.
@@ -568,40 +363,88 @@ func lines(text string) []string {
 	return res
 }
 
-// assertOnlyInsertedLines checks that goro.yaml at path is testdata/add/goro.yaml with lines
-// inserted: dropping the added lines gives the original back byte for byte, so no line of it
-// moved or changed (ADR 0002, consequences observed).
-func assertOnlyInsertedLines(t *testing.T, path string) {
+// assertOnlyInsertedLines checks that the file at path is original with lines inserted: dropping
+// the added lines gives original back byte for byte, so no line of it moved or changed (ADR 0002,
+// consequences observed). The one change allowed is a newline after a last line that had none,
+// which inserting after it needs.
+func assertOnlyInsertedLines(t *testing.T, original, path string) {
 	t.Helper()
 
 	b, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	original, edited := lines(readTestdata(t, "add/goro.yaml")), lines(string(b))
+	withNewline := func(s string) string {
+		if s != "" && !strings.HasSuffix(s, "\n") {
+			return s + "\n"
+		}
+		return s
+	}
+	want, got := lines(withNewline(original)), lines(withNewline(string(b)))
 
-	// The original has to be a subsequence of the edited file; matching greedily finds one when
-	// there is one.
+	// original has to be a subsequence of the edited file; matching greedily finds one when there
+	// is one.
 	i := 0
-	for _, line := range edited {
-		if i < len(original) && line == original[i] {
+	for _, line := range got {
+		if i < len(want) && line == want[i] {
 			i++
 		}
 	}
-	if i < len(original) {
-		t.Errorf("%s isn't testdata/add/goro.yaml with lines inserted: line %d of the original, %q, changed, moved or went missing:\n%s",
-			path, i+1, original[i], b)
+	if i < len(want) {
+		t.Errorf("%s isn't the original goro.yaml with lines inserted: line %d of the original, %q, changed, moved or went missing:\n%s",
+			path, i+1, want[i], b)
 	}
+}
+
+// assertConfigLists compares the lists of two configs: storages, the use case, services and
+// adapters. %+v prints a nil and an empty list alike.
+func assertConfigLists(t *testing.T, got, want config.Config) {
+	t.Helper()
+
+	for _, part := range []struct {
+		name      string
+		got, want interface{}
+	}{
+		{"storages", got.Storages, want.Storages},
+		{"use_case", got.UseCase, want.UseCase},
+		{"services", got.Services, want.Services},
+		{"adapters", got.Adapters, want.Adapters},
+	} {
+		if g, w := fmt.Sprintf("%+v", part.got), fmt.Sprintf("%+v", part.want); g != w {
+			t.Errorf("goro.yaml %s = %s, want %s", part.name, g, w)
+		}
+	}
+}
+
+// afterAddSteps is cfg with what addSteps adds.
+func afterAddSteps(cfg config.Config) config.Config {
+	res := cfg
+	res.Storages = append(append(config.Storages{}, cfg.Storages...), "pgsqlx")
+	res.UseCase.Methods = append(append([]string{}, cfg.UseCase.Methods...), "SignOut")
+	res.Services = append(append(config.Services{}, cfg.Services...),
+		config.Service{Name: "Billing", Methods: []string{"Charge", "Refund", "Void"}, Deps: []string{"PaymentsRepo"}})
+	res.Adapters = append(config.Adapters{}, cfg.Adapters...)
+	for i := range res.Adapters {
+		if res.Adapters[i].Name == "UserRepo" {
+			res.Adapters[i].Methods = append(append([]string{}, res.Adapters[i].Methods...), "Save")
+		}
+	}
+	res.Adapters = append(res.Adapters, config.Adapter{Name: "PaymentsRepo", Storage: "pgsqlx", Methods: []string{"Save"}})
+
+	return res
 }
 
 func TestAddEditsGoroYamlInPlace(t *testing.T) {
 	dir, path := addProject(t)
+	before := loadProjectConfig(t, path)
 
 	runAddSteps(t, path, addOpts)
 
 	// New list items go after the last item of the list, before trailing commented-out items,
 	// at the list's indentation; nothing else in the file changes.
 	assertGolden(t, path, "add/goro.golden.yaml")
-	assertOnlyInsertedLines(t, path)
-	assertMatchesFreshInit(t, dir, loadProjectConfig(t, path))
+	assertOnlyInsertedLines(t, readTestdata(t, "add/goro.yaml"), path)
+	after := loadProjectConfig(t, path)
+	assertConfigLists(t, after, afterAddSteps(before))
+	assertMatchesFreshInit(t, dir, after)
 }

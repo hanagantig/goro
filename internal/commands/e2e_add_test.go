@@ -22,7 +22,9 @@ func TestE2EInitAddBuild(t *testing.T) {
 		t.Fatalf("the e2e test needs the go tool: %v", err)
 	}
 
-	// testdata/init/goro.yaml lives in root/templates and has work_dir: ../app.
+	// testdata/init/goro.yaml lives in root/templates and has work_dir: ../app. The test runs in
+	// an empty working directory, so a path resolved against it can't land in goro's source tree.
+	t.Chdir(t.TempDir())
 	root := t.TempDir()
 	project := filepath.Join(root, "app")
 	mkdir(t, project)
@@ -47,7 +49,7 @@ func TestE2EInitAddBuild(t *testing.T) {
 	path := filepath.Join(project, "goro.yaml")
 	runAddSteps(t, path, commands.Options{Out: io.Discard})
 	assertGolden(t, path, "add/goro.golden.yaml")
-	assertOnlyInsertedLines(t, path)
+	assertOnlyInsertedLines(t, readTestdata(t, "add/goro.yaml"), path)
 
 	build := exec.Command(goBin, "build", "./...")
 	build.Dir = project

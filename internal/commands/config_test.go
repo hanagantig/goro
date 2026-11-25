@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/hanagantig/goro/internal/commands"
@@ -37,7 +38,30 @@ func mkdir(t *testing.T, path string) {
 	}
 }
 
+func TestConfigRecordsItsPath(t *testing.T) {
+	t.Chdir(t.TempDir())
+	path := filepath.Join(t.TempDir(), "goro.yaml")
+	writeFile(t, filepath.Dir(path), "goro.yaml", "app:\n  name: demo\n  module: demo\n  work_dir: .\n")
+
+	cfg, err := config.NewConfig(path)
+	if err != nil {
+		t.Fatalf("read config: %v", err)
+	}
+	if cfg.Path != path {
+		t.Errorf("config.NewConfig(%q) gives Path %q, want the path it read", path, cfg.Path)
+	}
+
+	cfg, err = commands.LoadConfig(path)
+	if err != nil {
+		t.Fatalf("load config: %v", err)
+	}
+	if cfg.Path != path {
+		t.Errorf("LoadConfig(%q) gives Path %q, want the path it read", path, cfg.Path)
+	}
+}
+
 func TestLoadConfigResolvesRelativeWorkDir(t *testing.T) {
+	t.Chdir(t.TempDir())
 	root := t.TempDir()
 	project := filepath.Join(root, "project")
 	for _, d := range []string{project, filepath.Join(project, "app"), filepath.Join(root, "other"), filepath.Join(root, "abs")} {
@@ -71,24 +95,60 @@ func TestLoadConfigResolvesRelativeWorkDir(t *testing.T) {
 	}
 }
 
+// workDirLine is the work_dir line of testdata/add/goro.yaml.
+const workDirLine = "  work_dir: . # the project, relative to this file\n"
+
+// outsideProject lays out root/templates/goro.yaml, holding source, and an empty project dir
+// root/app, after moving the test into an empty working directory. It returns the source path and
+// the project dir.
+func outsideProject(t *testing.T, source string) (sourcePath, project string) {
+	t.Helper()
+
+	t.Chdir(t.TempDir())
+	root := t.TempDir()
+	project = filepath.Join(root, "app")
+	mkdir(t, project)
+	writeFile(t, root, "templates/goro.yaml", source)
+
+	return filepath.Join(root, "templates", "goro.yaml"), project
+}
+
+// loadOutsideConfig loads the config at source and checks that its work dir is project: init
+// writes into the work dir, so the test stops before init otherwise.
+func loadOutsideConfig(t *testing.T, source, project string) config.Config {
+	t.Helper()
+
+	cfg, err := commands.LoadConfig(source)
+	if err != nil {
+		t.Fatalf("load config: %v", err)
+	}
+	if !sameDir(cfg.App.WorkDir, project) {
+		t.Fatalf("LoadConfig gives work dir %q for %s, want %s", cfg.App.WorkDir, source, project)
+	}
+
+	return cfg
+}
+
+// readWithWorkDir reads the config at source and sets its work dir to workDir itself. That stands
+// for the answer to init's question when the config gives no work dir, which LoadConfig would ask,
+// and keeps a test from depending on how LoadConfig resolves work_dir.
+func readWithWorkDir(t *testing.T, source, workDir string) config.Config {
+	t.Helper()
+
+	cfg, err := config.NewConfig(source)
+	if err != nil {
+		t.Fatalf("read config: %v", err)
+	}
+	cfg.App.WorkDir = workDir
+
+	return cfg
+}
+
 func TestInitSavesGoroYamlInProjectRoot(t *testing.T) {
 	t.Run("a config from outside the project is copied with work_dir: .", func(t *testing.T) {
-		// testdata/init/goro.yaml lives in root/templates and has work_dir: ../app.
-		root := t.TempDir()
-		project := filepath.Join(root, "app")
-		mkdir(t, project)
-		source := filepath.Join(root, "templates", "goro.yaml")
-		writeFile(t, root, "templates/goro.yaml", readTestdata(t, "init/goro.yaml"))
-
-		cfg, err := commands.LoadConfig(source)
-		if err != nil {
-			t.Fatalf("load config: %v", err)
-		}
-		// Init writes into the work dir, so stop before it unless work_dir: ../app resolved
-		// to the project.
-		if !sameDir(cfg.App.WorkDir, project) {
-			t.Fatalf("LoadConfig gives work dir %q for work_dir: ../app in %s, want %s", cfg.App.WorkDir, source, project)
-		}
+		// testdata/init/goro.yaml has work_dir: ../app.
+		source, project := outsideProject(t, readTestdata(t, "init/goro.yaml"))
+		cfg := loadOutsideConfig(t, source, project)
 
 		if err := commands.Init(cfg, commands.Options{SkipGoMod: true, Out: io.Discard}); err != nil {
 			t.Fatalf("init: %v", err)
@@ -98,21 +158,15 @@ func TestInitSavesGoroYamlInProjectRoot(t *testing.T) {
 		if !exists(project, "goro.yaml") {
 			t.Fatalf("init didn't save goro.yaml in the project root")
 		}
-		// The copy is the source with work_dir: ., comments and key order kept, which is
+		// The copy is the source with only the work_dir line changed, which is
 		// testdata/add/goro.yaml.
 		assertGolden(t, saved, "add/goro.yaml")
-		if got := readFile(t, root, "templates/goro.yaml"); got != readTestdata(t, "init/goro.yaml") {
+		if got := readFile(t, filepath.Dir(source), "goro.yaml"); got != readTestdata(t, "init/goro.yaml") {
 			t.Errorf("init changed the source config:\n%s", got)
 		}
 
 		// The saved goro.yaml describes the project: update from it has nothing to do.
-		cfg, err = commands.LoadConfig(saved)
-		if err != nil {
-			t.Fatalf("load the saved goro.yaml: %v", err)
-		}
-		if !sameDir(cfg.App.WorkDir, project) {
-			t.Fatalf("LoadConfig gives work dir %q for the saved goro.yaml, want %s", cfg.App.WorkDir, project)
-		}
+		cfg = loadOutsideConfig(t, saved, project)
 		report, err := commands.Update(cfg, commands.Options{SkipGoMod: true, Out: io.Discard})
 		if err != nil {
 			t.Fatalf("update from the saved goro.yaml: %v", err)
@@ -124,38 +178,72 @@ func TestInitSavesGoroYamlInProjectRoot(t *testing.T) {
 		}
 	})
 
-	t.Run("a work dir the config doesn't give is saved as work_dir: .", func(t *testing.T) {
-		// newConfig loads baseConfig, which has no work_dir, from outside the project and sets
-		// the work dir itself, as the answer to init's question does.
-		dir := t.TempDir()
-		cfg := newConfig(t, dir)
-		initProject(t, cfg)
+	t.Run("a config without work_dir gets a work_dir: . line", func(t *testing.T) {
+		base := readTestdata(t, "add/goro.yaml")
+		src := strings.Replace(base, workDirLine, "", 1)
+		source, project := outsideProject(t, src)
 
-		if !exists(dir, "goro.yaml") {
+		if err := commands.Init(readWithWorkDir(t, source, project), commands.Options{SkipGoMod: true, Out: io.Discard}); err != nil {
+			t.Fatalf("init: %v", err)
+		}
+
+		if !exists(project, "goro.yaml") {
 			t.Fatalf("init didn't save goro.yaml in the project root")
 		}
-		saved, err := config.NewConfig(filepath.Join(dir, "goro.yaml"))
-		if err != nil {
-			t.Fatalf("read the saved goro.yaml: %v", err)
+		// The source with one line inserted after the last key of app, at its indentation.
+		want := strings.Replace(base, workDirLine, "  work_dir: .\n", 1)
+		if got := readFile(t, project, "goro.yaml"); got != want {
+			t.Errorf("saved goro.yaml:\n%s\nwant the source with a work_dir: . line inserted:\n%s", got, want)
 		}
-		if saved.App.WorkDir != "." {
-			t.Errorf("saved goro.yaml has work_dir %q, want .", saved.App.WorkDir)
+		assertOnlyInsertedLines(t, src, filepath.Join(project, "goro.yaml"))
+	})
+
+	t.Run(`a config with work_dir: "" gets only that line changed`, func(t *testing.T) {
+		// The form example/testapp/goro.yaml uses.
+		base := readTestdata(t, "add/goro.yaml")
+		src := strings.Replace(base, workDirLine, `  work_dir: "" # the project, relative to this file`+"\n", 1)
+		source, project := outsideProject(t, src)
+
+		if err := commands.Init(readWithWorkDir(t, source, project), commands.Options{SkipGoMod: true, Out: io.Discard}); err != nil {
+			t.Fatalf("init: %v", err)
 		}
-		// %v prints nil and empty lists alike, which a saved file may choose between.
-		for _, part := range []struct {
-			name      string
-			got, want interface{}
-		}{
-			{"app.name", saved.App.Name, cfg.App.Name},
-			{"app.module", saved.App.Module, cfg.App.Module},
-			{"storages", saved.Storages, cfg.Storages},
-			{"use_case", saved.UseCase, cfg.UseCase},
-			{"services", saved.Services, cfg.Services},
-			{"adapters", saved.Adapters, cfg.Adapters},
-		} {
-			if got, want := fmt.Sprintf("%+v", part.got), fmt.Sprintf("%+v", part.want); got != want {
-				t.Errorf("saved goro.yaml %s = %s, want %s", part.name, got, want)
-			}
+
+		if !exists(project, "goro.yaml") {
+			t.Fatalf("init didn't save goro.yaml in the project root")
+		}
+		assertGolden(t, filepath.Join(project, "goro.yaml"), "add/goro.yaml")
+	})
+}
+
+// TestInitWithGoroYamlInProjectRoot: init from a config outside the project never overwrites a
+// goro.yaml the project root already holds (ADR 0001, ADR 0002).
+func TestInitWithGoroYamlInProjectRoot(t *testing.T) {
+	t.Run("a different goro.yaml makes init refuse", func(t *testing.T) {
+		source, project := outsideProject(t, readTestdata(t, "init/goro.yaml"))
+		writeFile(t, project, "goro.yaml", "app:\n  name: stale\n  module: stale\n  work_dir: .\n")
+		cfg := readWithWorkDir(t, source, project)
+		ageFiles(t, filepath.Dir(project))
+		before := snapshot(t, filepath.Dir(project))
+
+		err := commands.Init(cfg, commands.Options{SkipGoMod: true, Out: io.Discard})
+		// The error names the project's goro.yaml, not the source next to it.
+		assertError(t, err, errorCheck{file: filepath.Join(filepath.Base(project), "goro.yaml")})
+		assertNoChanges(t, before, snapshot(t, filepath.Dir(project)))
+	})
+
+	t.Run("the goro.yaml init would write lets init go on", func(t *testing.T) {
+		// Passes today, since init doesn't write goro.yaml yet; it keeps init from refusing the
+		// copy it would write itself.
+		source, project := outsideProject(t, readTestdata(t, "init/goro.yaml"))
+		writeFile(t, project, "goro.yaml", readTestdata(t, "add/goro.yaml"))
+		cfg := readWithWorkDir(t, source, project)
+
+		if err := commands.Init(cfg, commands.Options{SkipGoMod: true, Out: io.Discard}); err != nil {
+			t.Fatalf("init: %v", err)
+		}
+		assertGolden(t, filepath.Join(project, "goro.yaml"), "add/goro.yaml")
+		if !exists(project, "internal/app/app.go") {
+			t.Errorf("init didn't generate the project")
 		}
 	})
 }

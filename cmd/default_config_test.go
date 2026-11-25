@@ -14,8 +14,9 @@ import (
 	"github.com/hanagantig/goro/internal/commands"
 )
 
-// Rules under test: ADR 0002, update and add read ./goro.yaml when --config isn't given. These
-// tests run the command line in a project root; the commands package tests everything else.
+// Rules under test: ADR 0002, update and add read ./goro.yaml when --config isn't given, and
+// --config points them elsewhere. These tests run the command line; the commands package tests
+// everything else.
 
 // runMainEnv makes the test binary run goro's command line instead of the tests, so a test can
 // run goro in another directory without building it first.
@@ -55,10 +56,12 @@ adapters:
       - GetByID
 `
 
-// newProject makes a project with projectConfig in its root and returns its dir.
+// newProject makes a project with projectConfig in its root and returns its dir. The test moves
+// into an empty working directory first, so nothing resolved against it lands in goro's tree.
 func newProject(t *testing.T) string {
 	t.Helper()
 
+	t.Chdir(t.TempDir())
 	dir := t.TempDir()
 	path := filepath.Join(dir, "goro.yaml")
 	if err := os.WriteFile(path, []byte(projectConfig), 0o644); err != nil {
@@ -216,5 +219,60 @@ func TestAddReadsGoroYamlInCurrentDir(t *testing.T) {
 			}
 			assertSameFiles(t, before, files(t, dir))
 		})
+	}
+}
+
+func TestConfigFlagOverridesTheDefault(t *testing.T) {
+	project := newProject(t)
+	path := filepath.Join(project, "goro.yaml")
+	// A directory without goro.yaml to run goro in.
+	elsewhere := t.TempDir()
+
+	t.Run("update", func(t *testing.T) {
+		// goro.yaml: a new use case method.
+		edited := strings.Replace(projectConfig, "    - SignIn\n", "    - SignIn\n    - SignOut\n", 1)
+		if err := os.WriteFile(path, []byte(edited), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() {
+			if err := os.WriteFile(path, []byte(projectConfig), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		})
+		before := files(t, project)
+
+		out, err := goro(t, elsewhere, "update", "--dry-run", "--config", path)
+		if err != nil {
+			t.Fatalf("goro update --dry-run --config %s: %v\n%s", path, err, out)
+		}
+		if !hasLineWith(out, "create", "internal/usecase/sign_out.go") {
+			t.Errorf("goro update --dry-run --config doesn't show the new use case method:\n%s", out)
+		}
+		// The project's work_dir is ., so the dry run has to look at the project, where
+		// app.go exists, not at the directory goro runs in.
+		if hasLineWith(out, "create", "internal/app/app.go") {
+			t.Errorf("goro update --dry-run --config planned the project in the directory it runs in:\n%s", out)
+		}
+		assertSameFiles(t, before, files(t, project))
+	})
+
+	t.Run("add", func(t *testing.T) {
+		before := files(t, project)
+
+		out, err := goro(t, elsewhere, "add", "usecase", "SignOut", "--dry-run", "--config", path)
+		if err != nil {
+			t.Fatalf("goro add usecase SignOut --dry-run --config %s: %v\n%s", path, err, out)
+		}
+		if !hasLineWith(out, "create", "internal/usecase/sign_out.go") {
+			t.Errorf("goro add usecase --dry-run --config doesn't show that it would create sign_out.go:\n%s", out)
+		}
+		if hasLineWith(out, "create", "internal/app/app.go") {
+			t.Errorf("goro add --dry-run --config planned the project in the directory it runs in:\n%s", out)
+		}
+		assertSameFiles(t, before, files(t, project))
+	})
+
+	if entries, err := os.ReadDir(elsewhere); err != nil || len(entries) != 0 {
+		t.Errorf("goro wrote into the directory it ran in: %v %v", entries, err)
 	}
 }
