@@ -225,3 +225,43 @@ func TestSetScalar(t *testing.T) {
 		}
 	})
 }
+
+// TestAnchorsAndTags: the node of an anchored or tagged collection starts at its anchor or tag,
+// not at its first item or key, so the column of what goes in comes from the items' own lines.
+func TestAnchorsAndTags(t *testing.T) {
+	t.Run("items of an anchored list", func(t *testing.T) {
+		d := parse(t, "use_case:\n  methods: &ucm\n    - SignIn\n    - Pong\nx: 1\n")
+		check(t, d.AppendItems(node(t, d, "use_case", "methods"), "SignOut"))
+		assertText(t, d, "use_case:\n  methods: &ucm\n    - SignIn\n    - Pong\n    - SignOut\nx: 1\n")
+	})
+
+	t.Run("items of a tagged list with tagged items", func(t *testing.T) {
+		d := parse(t, "use_case:\n  methods: !!seq\n    - !!str SignIn\n    - Pong\nx: 1\n")
+		check(t, d.AppendItems(node(t, d, "use_case", "methods"), "SignOut"))
+		assertText(t, d, "use_case:\n  methods: !!seq\n    - !!str SignIn\n    - Pong\n    - SignOut\nx: 1\n")
+	})
+
+	t.Run("items of an anchored list with a comment after the anchor", func(t *testing.T) {
+		d := parse(t, "use_case:\n  methods: &ucm # c\n    - SignIn\n")
+		check(t, d.AppendItems(node(t, d, "use_case", "methods"), "SignOut"))
+		assertText(t, d, "use_case:\n  methods: &ucm # c\n    - SignIn\n    - SignOut\n")
+	})
+
+	t.Run("a mapping in an anchored list", func(t *testing.T) {
+		d := parse(t, "l: &s\n  -   name: A\n")
+		check(t, d.AppendItems(node(t, d, "l"), Map{{"name", "B"}}))
+		assertText(t, d, "l: &s\n  -   name: A\n  -   name: B\n")
+	})
+
+	t.Run("a key of an anchored mapping", func(t *testing.T) {
+		d := parse(t, "app: &a\n  name: demo\n  module: x\n")
+		check(t, d.SetScalar(node(t, d, "app"), "work_dir", "."))
+		assertText(t, d, "app: &a\n  name: demo\n  module: x\n  work_dir: .\n")
+	})
+
+	t.Run("the layout of anchored and tagged values", func(t *testing.T) {
+		d := parse(t, "a: &x\n    b: 1\nc: !!seq\n- z\n")
+		check(t, d.InsertField(d.Root(), "n", Map{{"k", List{"v"}}}))
+		assertText(t, d, "a: &x\n    b: 1\nc: !!seq\n- z\nn:\n    k:\n    - v\n")
+	})
+}
