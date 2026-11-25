@@ -86,27 +86,27 @@ func (g *Generator) loadChunks() error {
 	return nil
 }
 
-func (g *Generator) Generate() error {
+// Generate renders the templates through every chain into an in-memory file system and returns
+// it. Paths in it start at "/", which stands for the work dir. Generate doesn't touch the disk;
+// the caller decides what to write.
+func (g *Generator) Generate() (*afero.Afero, error) {
 	fs, err := g.getTemplateFS()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = g.loadChunks()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	for k, ch := range g.chains {
-		fmt.Printf("chain #%d: %s \n", k+1, ch.Name())
-
+	for _, ch := range g.chains {
 		fs, err = ch.Apply(fs, g.config)
 		if err != nil {
-			fmt.Printf("%s fail: %v", ch.Name(), err)
 			_ = ch.Rollback()
-			return err
+			return nil, fmt.Errorf("%s: %w", ch.Name(), err)
 		}
 	}
 
-	return nil
+	return fs, nil
 }

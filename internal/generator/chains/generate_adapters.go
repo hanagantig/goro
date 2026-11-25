@@ -119,7 +119,7 @@ func (g *generateAdapterChain) Apply(fs *afero.Afero, data entity.Config) (*afer
 }
 
 func (g *generateAdapterChain) Name() string {
-	return "Generate useCase chain"
+	return "Generate adapters chain"
 }
 
 func (g *generateAdapterChain) Rollback() error {
