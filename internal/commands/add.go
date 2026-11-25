@@ -34,7 +34,7 @@ func AddUseCase(configPath, method string, opts Options) (Report, error) {
 
 	g.cfg.UseCase.Methods = append(g.cfg.UseCase.Methods, method)
 
-	return g.save(opts, func() error {
+	return g.save(opts, fmt.Sprintf("use case method '%s'", method), func() error {
 		return g.appendTo(g.root, "", []string{"use_case", "methods"}, method)
 	})
 }
@@ -51,7 +51,7 @@ func AddService(configPath string, svc config.Service, opts Options) (Report, er
 	svc = config.Service{Name: svc.Name, Methods: svc.Methods, Deps: svc.Deps}
 	g.cfg.Services = append(g.cfg.Services, svc)
 
-	return g.save(opts, func() error {
+	return g.save(opts, fmt.Sprintf("service '%s'", svc.Name), func() error {
 		item := yamledit.Map{
 			{Key: "name", Value: svc.Name},
 			{Key: "methods", Value: list(svc.Methods)},
@@ -77,7 +77,7 @@ func AddAdapter(configPath string, adapter config.Adapter, opts Options) (Report
 	}
 	g.cfg.Adapters = append(g.cfg.Adapters, a)
 
-	return g.save(opts, func() error {
+	return g.save(opts, fmt.Sprintf("adapter '%s'", a.Name), func() error {
 		if newStorage {
 			if err := g.appendTo(g.root, "", []string{"storages"}, a.Storage.String()); err != nil {
 				return err
@@ -132,7 +132,7 @@ func AddMethod(configPath, ref string, opts Options) (Report, error) {
 		return Report{}, fmt.Errorf("'%s' is neither a service nor an adapter in %s", name, g.path)
 	}
 
-	return g.save(opts, func() error {
+	return g.save(opts, fmt.Sprintf("method %s.%s", name, method), func() error {
 		item, label, err := g.item(section, name)
 		if err != nil {
 			return err

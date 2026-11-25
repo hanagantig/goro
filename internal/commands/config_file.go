@@ -30,6 +30,9 @@ type configFile struct {
 	action  Action
 	current []byte
 	content []byte
+	// added names what an add put into goro.yaml, such as service 'Billing', for errors that
+	// happen after goro.yaml is written; empty for init.
+	added string
 }
 
 // planned returns f as an entry of a plan, for printing.
@@ -42,7 +45,56 @@ func (f *configFile) write() error {
 		return nil
 	}
 
-	return os.WriteFile(f.path, f.content, 0o644)
+	return writeWhole(f.path, f.content)
+}
+
+// afterWrite wraps err, which happened after f was written, with what goro.yaml lists now and how
+// to finish the job.
+func (f *configFile) afterWrite(err error) error {
+	if err == nil || f == nil || f.added == "" {
+		return err
+	}
+
+	return fmt.Errorf("%w\n%s now lists %s; fix the cause and run `goro update`", err, f.shown, f.added)
+}
+
+// writeWhole writes content to path through a temporary file in the same directory and a rename,
+// so a crash can't leave the file half written. It writes through a symlink at path to the link's
+// target, and keeps the mode of the file it replaces; a new file gets 0644.
+func writeWhole(path string, content []byte) error {
+	target := path
+	if resolved, err := filepath.EvalSymlinks(path); err == nil {
+		target = resolved
+	} else if !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+
+	mode := fs.FileMode(0o644)
+	if info, err := os.Stat(target); err == nil {
+		mode = info.Mode().Perm()
+	}
+
+	tmp, err := os.CreateTemp(filepath.Dir(target), "."+filepath.Base(target)+".*.tmp")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmp.Name())
+
+	_, err = tmp.Write(content)
+	if err == nil {
+		err = tmp.Sync()
+	}
+	if cerr := tmp.Close(); err == nil {
+		err = cerr
+	}
+	if err == nil {
+		err = os.Chmod(tmp.Name(), mode)
+	}
+	if err != nil {
+		return err
+	}
+
+	return os.Rename(tmp.Name(), target)
 }
 
 // shownPath returns path relative to workDir, slash-separated, when it is inside workDir, and

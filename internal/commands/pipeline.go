@@ -31,7 +31,7 @@ func render(cfg config.Config) (*afero.Afero, error) {
 // Under DryRun it prints the plan instead and writes nothing, go mod files included. command
 // names the goro command in the output; goModInit adds `go mod init` before `go mod tidy`. conf,
 // when set, is a goro.yaml to write first; it is printed with the plan but isn't part of the
-// report.
+// report, and an error after it is written says what it lists now (see configFile.afterWrite).
 func run(cfg config.Config, opts Options, command string, goModInit bool, conf *configFile) (Report, error) {
 	out := opts.Out
 	if out == nil {
@@ -68,14 +68,14 @@ func run(cfg config.Config, opts Options, command string, goModInit bool, conf *
 	}
 	err = writeFiles(cfg.App.WorkDir, files)
 	if err != nil {
-		return Report{}, err
+		return Report{}, conf.afterWrite(err)
 	}
 	printSummary(out, command, cfg.App.WorkDir, shown)
 
 	if !opts.SkipGoMod {
 		err = runGoMod(out, cfg, goModInit)
 		if err != nil {
-			return Report{}, err
+			return Report{}, conf.afterWrite(err)
 		}
 	}
 

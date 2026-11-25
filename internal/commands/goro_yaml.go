@@ -63,8 +63,9 @@ func readGoroYaml(path string) (*goroYaml, error) {
 }
 
 // save validates g.cfg, runs edit to queue the text edits that make the same change, checks that
-// the edited text says what g.cfg says, and then writes goro.yaml and runs the update.
-func (g *goroYaml) save(opts Options, edit func() error) (Report, error) {
+// the edited text says what g.cfg says, and then writes goro.yaml and runs the update. added names
+// the addition, such as service 'Billing', for errors after goro.yaml is written.
+func (g *goroYaml) save(opts Options, added string, edit func() error) (Report, error) {
 	if err := g.cfg.Validate(); err != nil {
 		return Report{}, err
 	}
@@ -83,6 +84,7 @@ func (g *goroYaml) save(opts Options, edit func() error) (Report, error) {
 		action:  ActionOverwrite,
 		current: g.data,
 		content: content,
+		added:   added,
 	}
 
 	return run(g.cfg, opts, "add", false, conf)
