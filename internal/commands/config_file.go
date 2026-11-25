@@ -64,10 +64,11 @@ func shownPath(path, workDir string) string {
 	return filepath.ToSlash(rel)
 }
 
-// initConfigFile returns the goro.yaml that init saves in the project root: a copy of the
-// config it read (see projectGoroYaml). It returns nil when there is nothing to save, because the
-// config wasn't read from a file or is the project's goro.yaml itself. A different goro.yaml in
-// the project root is an error: init never overwrites a file.
+// initConfigFile returns the goro.yaml that init saves in the project root: a copy of the config
+// it read, with the app name cfg holds when that config has none (see projectGoroYaml). It
+// returns nil when there is nothing to save, because the config wasn't read from a file or is the
+// project's goro.yaml itself. A different goro.yaml in the project root is an error: init never
+// overwrites a file.
 func initConfigFile(cfg config.Config) (*configFile, error) {
 	if cfg.Path == "" {
 		return nil, nil
@@ -83,7 +84,7 @@ func initConfigFile(cfg config.Config) (*configFile, error) {
 	if err != nil {
 		return nil, err
 	}
-	content, err := projectGoroYaml(source, cfg.Path)
+	content, err := projectGoroYaml(source, cfg.Path, cfg.App.Name)
 	if err != nil {
 		return nil, fmt.Errorf("init: can't save a copy of %s in the project root: %w", cfg.Path, err)
 	}
@@ -123,30 +124,37 @@ func sameFile(a, b string) (bool, error) {
 }
 
 // projectGoroYaml returns source, the goro.yaml at path outside the project, as init saves it in
-// the project root: the same text with app.work_dir set to "." in place, or inserted after the
-// last key of app.
-func projectGoroYaml(source []byte, path string) ([]byte, error) {
+// the project root: the same text with app.work_dir set to ".", and app.name set to name when
+// source has none, which is the answer to LoadConfig's question. Each is set in place, or
+// inserted after the last key of app.
+func projectGoroYaml(source []byte, path, name string) ([]byte, error) {
+	want, err := config.ParseConfig(source, path)
+	if err != nil {
+		return nil, err
+	}
+
 	doc, err := yamledit.Parse(source)
 	if err != nil {
 		return nil, err
 	}
 	_, app := yamledit.Lookup(doc.Root(), "app")
 	if app == nil || app.Kind != yaml.MappingNode {
-		return nil, fmt.Errorf("%s has no app mapping", path)
+		return nil, errors.New("it has no app mapping")
 	}
 	if yamledit.IsFlow(app) {
-		return nil, fmt.Errorf("%s: app is a flow mapping, such as {name: demo}; write it as a block mapping with one key per line", path)
+		return nil, errors.New("app is a flow mapping, such as {name: demo}; write it as a block mapping, one key per line")
 	}
 
+	if want.App.Name == "" {
+		if err := doc.SetScalar(app, "name", name); err != nil {
+			return nil, fmt.Errorf("set app.name: %w", err)
+		}
+		want.App.Name = name
+	}
 	if err := doc.SetScalar(app, "work_dir", "."); err != nil {
-		return nil, fmt.Errorf("%s: set app.work_dir: %w", path, err)
+		return nil, fmt.Errorf("set app.work_dir: %w", err)
 	}
 	content := doc.Bytes()
-
-	want, err := config.ParseConfig(source, path)
-	if err != nil {
-		return nil, err
-	}
 	want.App.WorkDir = filepath.Dir(path)
 
 	return content, checkEdit(content, path, want)
