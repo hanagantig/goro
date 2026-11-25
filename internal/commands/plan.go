@@ -230,7 +230,8 @@ func goFiles(workDir, dir string) ([]string, error) {
 }
 
 // subdirs returns the directories directly in dir as slash-separated paths relative to workDir,
-// leaving out hidden ones. A missing dir has none.
+// leaving out hidden ones. A missing dir has none. A symlink to a directory isn't one, so
+// symlinked directories are neither scanned for orphans nor reported as orphans.
 func subdirs(workDir, dir string) ([]string, error) {
 	entries, err := readDir(workDir, dir)
 	if err != nil {
@@ -257,6 +258,7 @@ func readDir(workDir, dir string) ([]os.DirEntry, error) {
 }
 
 // writeFiles carries out the create and overwrite actions of a plan. It never deletes anything.
+// Writes follow symlinks: a symlinked file or directory on the path gets written through.
 func writeFiles(workDir string, files []plannedFile) error {
 	for _, f := range files {
 		if f.action != ActionCreate && f.action != ActionOverwrite {
