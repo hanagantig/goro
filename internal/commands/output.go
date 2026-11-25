@@ -28,8 +28,8 @@ func printDryRun(w io.Writer, files []plannedFile) error {
 			continue
 		}
 		diff, err := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
-			A:        difflib.SplitLines(string(f.current)),
-			B:        difflib.SplitLines(string(f.rendered)),
+			A:        splitLines(f.current),
+			B:        splitLines(f.rendered),
 			FromFile: "a/" + f.path,
 			ToFile:   "b/" + f.path,
 			Context:  3,
@@ -41,6 +41,24 @@ func printDryRun(w io.Writer, files []plannedFile) error {
 	}
 
 	return nil
+}
+
+// noNewline follows a last line without a newline in a unified diff, as git writes it.
+const noNewline = "\n\\ No newline at end of file\n"
+
+// splitLines splits content into the lines of a unified diff, each ending in "\n". difflib's
+// SplitLines would add an empty last line to content that ends in a newline, which gives wrong
+// hunk ranges and a fake line at the end of a file. A last line without a newline gets the
+// noNewline marker, so it differs from the same line with a newline and the patch stays exact.
+func splitLines(content []byte) []string {
+	lines := strings.SplitAfter(string(content), "\n")
+	last := len(lines) - 1
+	if lines[last] == "" {
+		return lines[:last]
+	}
+	lines[last] += noNewline
+
+	return lines
 }
 
 // printSummary prints the outcome of a run that wrote its plan. init lists only what it didn't

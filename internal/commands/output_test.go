@@ -2,6 +2,9 @@ package commands_test
 
 import (
 	"bytes"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -13,7 +16,81 @@ import (
 var actionLine = regexp.MustCompile(`^(create|overwrite|skip|skip-unmarked|orphan) +\S+$`)
 
 // diffPrefixes start every line of a unified diff.
-var diffPrefixes = []string{"--- ", "+++ ", "@@ ", " ", "+", "-"}
+var diffPrefixes = []string{"--- ", "+++ ", "@@ ", " ", "+", "-", `\ No newline at end of file`}
+
+func TestUpdateDryRunDiffsApply(t *testing.T) {
+	gitBin, err := exec.LookPath("git")
+	if err != nil {
+		t.Skip("needs git to apply the dry-run diffs")
+	}
+
+	dir := t.TempDir()
+	initProject(t, newConfig(t, dir))
+
+	// Hand edits at the end of marked files, which update throws away: one ending in a newline,
+	// one without a final newline.
+	appended := map[string]string{
+		"internal/app/http.go":   "// HAND\n",
+		"internal/app/logger.go": "// HAND",
+	}
+	for path, tail := range appended {
+		writeFile(t, dir, path, readFile(t, dir, path)+tail)
+	}
+
+	// goro.yaml: add pgsqlx to storages, which changes app.go, database.go and container.go
+	// in the middle and at the end.
+	cfg := newConfig(t, dir)
+	cfg.Storages = append(cfg.Storages, "pgsqlx")
+
+	var out bytes.Buffer
+	dry, err := commands.Update(cfg, commands.Options{SkipGoMod: true, DryRun: true, Out: &out})
+	if err != nil {
+		t.Fatalf("update --dry-run: %v", err)
+	}
+
+	overwritten := make([]string, 0)
+	for _, f := range dry.Files {
+		if f.Action == commands.ActionOverwrite {
+			overwritten = append(overwritten, f.Path)
+		}
+	}
+	for path := range appended {
+		if actionOf(dry, path) != commands.ActionOverwrite {
+			t.Fatalf("dry run gives %s action %q, want overwrite", path, actionOf(dry, path))
+		}
+	}
+
+	// The patch is the output without the action lines.
+	var patch strings.Builder
+	for _, line := range strings.SplitAfter(out.String(), "\n") {
+		if !actionLine.MatchString(strings.TrimSuffix(line, "\n")) {
+			patch.WriteString(line)
+		}
+	}
+	patchFile := filepath.Join(t.TempDir(), "update.patch")
+	if err := os.WriteFile(patchFile, []byte(patch.String()), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	git := func(args ...string) {
+		t.Helper()
+		cmd := exec.Command(gitBin, args...)
+		cmd.Dir = dir
+		if b, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("git %s: %v\n%s\npatch:\n%s", strings.Join(args, " "), err, b, patch.String())
+		}
+	}
+	// A repository of its own, so git apply doesn't resolve paths against an enclosing one.
+	git("init", "-q")
+	git("apply", "--check", patchFile)
+	git("apply", patchFile)
+
+	// Applied, the patch gives exactly what update writes.
+	report := update(t, cfg)
+	for _, path := range overwritten {
+		assertAction(t, report, path, commands.ActionUnchanged)
+	}
+}
 
 func TestUpdateDryRunPrintsReportWithDiffs(t *testing.T) {
 	dir := t.TempDir()
