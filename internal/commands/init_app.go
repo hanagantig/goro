@@ -4,28 +4,13 @@ import (
 	"github.com/hanagantig/goro/internal/config"
 	"github.com/hanagantig/goro/internal/generator"
 	"github.com/hanagantig/goro/internal/generator/chains"
-	"github.com/hanagantig/goro/internal/pkg/log"
 )
 
-func InitApp(configPath string) {
-	cfg, err := config.NewConfig(configPath)
+// Init generates a new project from cfg into cfg.App.WorkDir.
+func Init(cfg config.Config, opts Options) error {
+	err := cfg.Validate()
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = cfg.AskAndSetName()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = cfg.AskAndSetWorkDir()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = cfg.Validate()
-	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	g := generator.NewGenerator(cfg)
@@ -37,12 +22,10 @@ func InitApp(configPath string) {
 	g.AddChain(chains.NewGenerateCodeChain())
 	g.AddChain(chains.NewFitFileExtensionChain())
 	g.AddChain(chains.NewSaveFilesChain())
-	g.AddChain(chains.NewModInitChain())
-	g.AddChain(chains.NewModTidyChain())
-
-	err = g.Generate()
-
-	if err != nil {
-		log.Fatal(err)
+	if !opts.SkipGoMod {
+		g.AddChain(chains.NewModInitChain())
+		g.AddChain(chains.NewModTidyChain())
 	}
+
+	return g.Generate()
 }

@@ -4,28 +4,13 @@ import (
 	"github.com/hanagantig/goro/internal/config"
 	"github.com/hanagantig/goro/internal/generator"
 	"github.com/hanagantig/goro/internal/generator/chains"
-	"github.com/hanagantig/goro/internal/pkg/log"
 )
 
-func UpdateApp(configPath string) {
-	cfg, err := config.NewConfig(configPath)
+// Update brings the project in cfg.App.WorkDir in line with cfg.
+func Update(cfg config.Config, opts Options) error {
+	err := cfg.Validate()
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = cfg.AskAndSetName()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = cfg.AskAndSetWorkDir()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = cfg.Validate()
-	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	g := generator.NewGenerator(cfg)
@@ -41,11 +26,9 @@ func UpdateApp(configPath string) {
 	g.AddChain(chains.NewSyncServicesChain())
 	g.AddChain(chains.NewSyncAdaptersChain())
 	g.AddChain(chains.NewUpdateFilesChain())
-	g.AddChain(chains.NewModTidyChain())
-
-	err = g.Generate()
-
-	if err != nil {
-		log.Fatal(err)
+	if !opts.SkipGoMod {
+		g.AddChain(chains.NewModTidyChain())
 	}
+
+	return g.Generate()
 }
