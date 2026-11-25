@@ -5,15 +5,16 @@ import (
 	"io"
 )
 
-// Options control one run of Init or Update.
+// Options control one run of Init, Update or an Add function.
 type Options struct {
 	// SkipGoMod leaves out the `go mod init` and `go mod tidy` steps. They run the go tool and
 	// need the network, so in-process tests set it.
 	SkipGoMod bool
 
-	// DryRun makes Init and Update print and return their actions without writing anything: one
-	// line per file whose action isn't unchanged, a unified diff for each overwrite, and nothing
-	// else. It also leaves out the go mod steps. Init still refuses an existing goro project.
+	// DryRun makes Init, Update and the Add functions print and return their actions without
+	// writing anything: one line per file whose action isn't unchanged, a unified diff for each
+	// overwrite, and nothing else. The goro.yaml that init would save or add would change comes
+	// first. It also leaves out the go mod steps. Init still refuses an existing goro project.
 	DryRun bool
 
 	// Out receives the printed report. Nil means os.Stdout.

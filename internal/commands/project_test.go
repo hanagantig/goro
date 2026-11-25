@@ -46,8 +46,11 @@ func TestInitAcceptsDirWithOnlyGoroYaml(t *testing.T) {
 		t.Fatalf("init in a dir that holds only goro.yaml: %v", err)
 	}
 
-	if got := readFile(t, dir, "goro.yaml"); got != baseConfig {
-		t.Errorf("init changed goro.yaml:\n%s", got)
+	// baseConfig has no work_dir, which LoadConfig would ask for. init writes the answer into the
+	// project's goro.yaml as work_dir: . (ADR 0002) and leaves every other byte as it was.
+	want := strings.Replace(baseConfig, "  module: demo\n", "  module: demo\n  work_dir: .\n", 1)
+	if got := readFile(t, dir, "goro.yaml"); got != want {
+		t.Errorf("goro.yaml after init:\n%s\nwant the original with only a work_dir: . line inserted:\n%s", got, want)
 	}
 	if !exists(dir, "internal/app/app.go") || !hasMarker(readFile(t, dir, "internal/app/app.go")) {
 		t.Errorf("init didn't generate internal/app/app.go with the marker")

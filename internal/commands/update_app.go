@@ -13,5 +13,5 @@ func Update(cfg config.Config, opts Options) (Report, error) {
 		return Report{}, err
 	}
 
-	return run(cfg, opts, "update", false)
+	return run(cfg, opts, "update", false, nil)
 }

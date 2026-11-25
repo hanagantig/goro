@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"io"
+	"path/filepath"
 	"strings"
 
 	"github.com/pmezard/go-difflib/difflib"
@@ -30,8 +31,8 @@ func printDryRun(w io.Writer, files []plannedFile) error {
 		diff, err := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
 			A:        splitLines(f.current),
 			B:        splitLines(f.rendered),
-			FromFile: "a/" + f.path,
-			ToFile:   "b/" + f.path,
+			FromFile: diffName("a", f.path),
+			ToFile:   diffName("b", f.path),
 			Context:  3,
 		})
 		if err != nil {
@@ -41,6 +42,26 @@ func printDryRun(w io.Writer, files []plannedFile) error {
 	}
 
 	return nil
+}
+
+// diffName names path, slash-separated, in a diff header: under prefix, as git does, unless path
+// is absolute or goes up from the current directory.
+func diffName(prefix, path string) string {
+	if filepath.IsAbs(filepath.FromSlash(path)) || path == ".." || strings.HasPrefix(path, "../") {
+		return path
+	}
+
+	return prefix + "/" + path
+}
+
+// absPath returns path made absolute, or path itself when that fails.
+func absPath(path string) string {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return path
+	}
+
+	return abs
 }
 
 // noNewline follows a last line without a newline in a unified diff, as git writes it.
@@ -105,7 +126,7 @@ func printSummary(w io.Writer, command, workDir string, files []plannedFile) {
 	if len(parts) == 0 {
 		parts = append(parts, "nothing to do")
 	}
-	fmt.Fprintf(w, "goro %s in %s: %s.\n", command, workDir, strings.Join(parts, ", "))
+	fmt.Fprintf(w, "goro %s in %s: %s.\n", command, absPath(workDir), strings.Join(parts, ", "))
 
 	if counts[ActionSkipUnmarked] > 0 {
 		fmt.Fprintf(w, "skip-unmarked: these files are at paths goro generates but lack the line %q, so they are yours and goro left them alone. "+
