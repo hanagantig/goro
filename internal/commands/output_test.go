@@ -2,11 +2,82 @@ package commands_test
 
 import (
 	"bytes"
+	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/hanagantig/goro/internal/commands"
 )
+
+// actionLine is a dry-run report line: an action, then a path.
+var actionLine = regexp.MustCompile(`^(create|overwrite|skip|skip-unmarked|orphan) +\S+$`)
+
+// diffPrefixes start every line of a unified diff.
+var diffPrefixes = []string{"--- ", "+++ ", "@@ ", " ", "+", "-"}
+
+func TestUpdateDryRunPrintsReportWithDiffs(t *testing.T) {
+	dir := t.TempDir()
+	initProject(t, newConfig(t, dir))
+
+	const unmarked = "internal/app/container.go"
+	writeFile(t, dir, unmarked, removeMarker(readFile(t, dir, unmarked)))
+
+	// goro.yaml: add pgsqlx to storages, which changes app.go, database.go and container.go.
+	cfg := newConfig(t, dir)
+	cfg.Storages = append(cfg.Storages, "pgsqlx")
+
+	var out bytes.Buffer
+	if _, err := commands.Update(cfg, commands.Options{SkipGoMod: true, DryRun: true, Out: &out}); err != nil {
+		t.Fatalf("update --dry-run: %v", err)
+	}
+	printed := out.String()
+
+	t.Run("each overwrite has a diff", func(t *testing.T) {
+		for _, path := range []string{"internal/app/app.go", "internal/app/database.go"} {
+			if !strings.Contains(printed, "--- a/"+path+"\n+++ b/"+path+"\n") {
+				t.Errorf("output has no diff header for %s:\n%s", path, printed)
+			}
+		}
+		if !hasDiffLine(printed, "+", "pgsqlx *sqlx.DB") {
+			t.Errorf("app.go diff doesn't add the pgsqlx connection:\n%s", printed)
+		}
+	})
+
+	t.Run("a skipped file has no diff", func(t *testing.T) {
+		if strings.Contains(printed, "+++ b/"+unmarked) {
+			t.Errorf("output has a diff for %s, which goro won't write", unmarked)
+		}
+	})
+
+	t.Run("the output is only the report", func(t *testing.T) {
+		for _, line := range strings.Split(strings.TrimSuffix(printed, "\n"), "\n") {
+			if actionLine.MatchString(line) {
+				continue
+			}
+			isDiff := false
+			for _, p := range diffPrefixes {
+				if strings.HasPrefix(line, p) {
+					isDiff = true
+					break
+				}
+			}
+			if !isDiff {
+				t.Errorf("line %q is neither an action nor part of a diff", line)
+			}
+		}
+	})
+}
+
+// hasDiffLine reports whether a diff in text has a line that starts with sign and contains part.
+func hasDiffLine(text, sign, part string) bool {
+	for _, line := range strings.Split(text, "\n") {
+		if strings.HasPrefix(line, sign) && !strings.HasPrefix(line, sign+sign+sign+" ") && strings.Contains(line, part) {
+			return true
+		}
+	}
+
+	return false
+}
 
 func TestUpdatePrintsSummary(t *testing.T) {
 	dir := t.TempDir()

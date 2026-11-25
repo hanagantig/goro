@@ -6,6 +6,7 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/iancoleman/strcase v0.2.0
 	github.com/manifoldco/promptui v0.9.0
+	github.com/pmezard/go-difflib v1.0.0
 	github.com/spf13/cobra v1.4.0
 	golang.org/x/text v0.3.4
 	gopkg.in/yaml.v2 v2.4.0

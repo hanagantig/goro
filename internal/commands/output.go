@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"strings"
+
+	"github.com/pmezard/go-difflib/difflib"
 )
 
 // actionWidth fits the longest action name, skip-unmarked, so the paths line up.
@@ -11,6 +13,34 @@ const actionWidth = len(ActionSkipUnmarked)
 
 func printAction(w io.Writer, f plannedFile) {
 	fmt.Fprintf(w, "%-*s %s\n", actionWidth, f.action, f.path)
+}
+
+// printDryRun prints the plan and nothing else: one line per file whose action isn't unchanged,
+// each overwrite followed by a unified diff from the file in the work dir to the regenerated one.
+func printDryRun(w io.Writer, files []plannedFile) error {
+	for _, f := range files {
+		if f.action == ActionUnchanged {
+			continue
+		}
+		printAction(w, f)
+
+		if f.action != ActionOverwrite {
+			continue
+		}
+		diff, err := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
+			A:        difflib.SplitLines(string(f.current)),
+			B:        difflib.SplitLines(string(f.rendered)),
+			FromFile: "a/" + f.path,
+			ToFile:   "b/" + f.path,
+			Context:  3,
+		})
+		if err != nil {
+			return fmt.Errorf("diff %s: %w", f.path, err)
+		}
+		fmt.Fprint(w, diff)
+	}
+
+	return nil
 }
 
 // printSummary prints the outcome of a run that wrote its plan. init lists only what it didn't

@@ -11,8 +11,9 @@ type Options struct {
 	// need the network, so in-process tests set it.
 	SkipGoMod bool
 
-	// DryRun makes Update print and return its actions without writing anything.
-	// Not implemented yet.
+	// DryRun makes Update print and return its actions without writing anything: one line per
+	// file whose action isn't unchanged, a unified diff for each overwrite, and nothing else. It
+	// also leaves out the go mod steps.
 	DryRun bool
 
 	// Out receives the printed report. Nil means os.Stdout.

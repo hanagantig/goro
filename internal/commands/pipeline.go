@@ -28,8 +28,8 @@ func render(cfg config.Config) (*afero.Afero, error) {
 }
 
 // run renders cfg, plans every file against the work dir, writes the plan and prints a summary.
-// command names the goro command in the output; goModInit adds `go mod init` before
-// `go mod tidy`.
+// Under DryRun it prints the plan instead and writes nothing, go mod files included. command
+// names the goro command in the output; goModInit adds `go mod init` before `go mod tidy`.
 func run(cfg config.Config, opts Options, command string, goModInit bool) (Report, error) {
 	out := opts.Out
 	if out == nil {
@@ -44,6 +44,14 @@ func run(cfg config.Config, opts Options, command string, goModInit bool) (Repor
 	files, err := planFiles(rendered, cfg.App.WorkDir)
 	if err != nil {
 		return Report{}, err
+	}
+
+	if opts.DryRun {
+		err = printDryRun(out, files)
+		if err != nil {
+			return Report{}, err
+		}
+		return toReport(files), nil
 	}
 
 	err = writeFiles(cfg.App.WorkDir, files)
