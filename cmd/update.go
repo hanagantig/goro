@@ -17,7 +17,7 @@ var updateCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		err = commands.Update(cfg, commands.Options{})
+		_, err = commands.Update(cfg, commands.Options{})
 		if err != nil {
 			log.Fatal(err)
 		}

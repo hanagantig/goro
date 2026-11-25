@@ -7,10 +7,10 @@ import (
 )
 
 // Update brings the project in cfg.App.WorkDir in line with cfg.
-func Update(cfg config.Config, opts Options) error {
+func Update(cfg config.Config, opts Options) (Report, error) {
 	err := cfg.Validate()
 	if err != nil {
-		return err
+		return Report{}, err
 	}
 
 	g := generator.NewGenerator(cfg)
@@ -30,5 +30,5 @@ func Update(cfg config.Config, opts Options) error {
 		g.AddChain(chains.NewModTidyChain())
 	}
 
-	return g.Generate()
+	return Report{}, g.Generate()
 }
