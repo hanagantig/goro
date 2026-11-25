@@ -19,6 +19,12 @@ type Config struct {
 	Services Services `yaml:"services"`
 	Adapters Adapters `yaml:"adapters"`
 	Chunks   []Chunk
+
+	// Path is the file NewConfig read the config from, as it was passed; empty for a config
+	// that wasn't read from a file. A relative work_dir counts from its directory, and init
+	// copies goro.yaml from it into the project root (ADR 0002).
+	// Not set yet.
+	Path string `yaml:"-"`
 }
 
 type Chunk struct {
