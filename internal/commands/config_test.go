@@ -301,3 +301,87 @@ func TestInitSavesTheAskedAppName(t *testing.T) {
 		})
 	}
 }
+
+// TestInitFillsInTheProjectsGoroYaml: init from the goro.yaml in the project root itself writes
+// what LoadConfig had to ask for into that file, work_dir: . and the app name, in place or
+// inserted after the last key of app, and leaves every other byte as it was (ADR 0002). Then
+// goro add, which never asks, works on it, and update has nothing to ask.
+func TestInitFillsInTheProjectsGoroYaml(t *testing.T) {
+	const nameLine = "  name: demo\n"
+	base := readTestdata(t, "add/goro.yaml")
+	emptyWorkDir := strings.Replace(base, workDirLine, `  work_dir: "" # the project, relative to this file`+"\n", 1)
+	noName := strings.Replace(base, nameLine, "", 1)
+
+	cases := []struct {
+		name, source, want string
+		// original is source with the values init sets in place, for the inserted-lines check.
+		original string
+	}{
+		{
+			// The form example/testapp/goro.yaml uses.
+			name:     `work_dir: "" gets only that line changed`,
+			source:   emptyWorkDir,
+			want:     base,
+			original: base,
+		},
+		{
+			name:     "no work_dir key gets a work_dir: . line",
+			source:   strings.Replace(base, workDirLine, "", 1),
+			want:     strings.Replace(base, workDirLine, "  work_dir: .\n", 1),
+			original: strings.Replace(base, workDirLine, "", 1),
+		},
+		{
+			name:     "an asked name gets a name line",
+			source:   strings.Replace(emptyWorkDir, nameLine, "", 1),
+			want:     strings.Replace(noName, workDirLine, workDirLine+nameLine, 1),
+			original: noName,
+		},
+		{
+			name:     "a goro.yaml that needs nothing stays as it is",
+			source:   base,
+			want:     base,
+			original: base,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Chdir(t.TempDir())
+			dir := t.TempDir()
+			path := filepath.Join(dir, "goro.yaml")
+			writeFile(t, dir, "goro.yaml", c.source)
+
+			cfg, err := config.NewConfig(path)
+			if err != nil {
+				t.Fatalf("read config: %v", err)
+			}
+			// The answers to LoadConfig's questions.
+			if cfg.App.WorkDir == "" {
+				cfg.App.WorkDir = dir
+			}
+			if cfg.App.Name == "" {
+				cfg.App.Name = "demo"
+			}
+
+			if err := commands.Init(cfg, commands.Options{SkipGoMod: true, Out: io.Discard}); err != nil {
+				t.Fatalf("init: %v", err)
+			}
+			if got := readFile(t, dir, "goro.yaml"); got != c.want {
+				t.Errorf("goro.yaml after init:\n%s\nwant:\n%s", got, c.want)
+			}
+			assertOnlyInsertedLines(t, c.original, path)
+
+			// update reads it without asking: LoadConfig finds the name and the work dir.
+			saved, err := config.NewConfig(path)
+			if err != nil {
+				t.Fatalf("read the saved goro.yaml: %v", err)
+			}
+			if saved.App.Name == "" || !sameDir(saved.App.WorkDir, dir) {
+				t.Errorf("the saved goro.yaml gives name %q and work dir %q, want demo and %s", saved.App.Name, saved.App.WorkDir, dir)
+			}
+			// The first goro add works.
+			if _, err := commands.AddUseCase(path, "SignOut", addOpts); err != nil {
+				t.Errorf("add usecase SignOut on the saved goro.yaml: %v", err)
+			}
+		})
+	}
+}
