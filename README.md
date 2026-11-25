@@ -107,16 +107,17 @@ itself. Put the marker line back to hand the file back to goro.
 ### Orphans
 `update` deletes nothing. It lists as `orphan` the code in goro's folders that `goro.yaml`
 doesn't describe:
-- files in `internal/usecase/` that goro doesn't generate for the listed methods and
+- Go files in `internal/usecase/` that goro doesn't generate for the listed methods and
   dependencies;
 - packages in `internal/service/` and `internal/adapter/` that `goro.yaml` doesn't list, and
   storage folders in `internal/adapter/` without any listed adapter;
-- files in listed service and adapter packages that goro doesn't generate for their methods and
-  dependencies.
+- Go files in listed service and adapter packages that goro doesn't generate for their methods
+  and dependencies.
 
-Test files don't count. goro leaves orphans alone, and the generated wiring doesn't use them.
-Some are your own helpers, such as `internal/usecase/errors.go`; others are left over from a
-method, service, adapter or dependency you removed from `goro.yaml`. Delete the leftovers.
+Test files and non-Go files don't count. goro leaves orphans alone, and the generated wiring
+doesn't use them. Some are your own helpers, such as `internal/usecase/errors.go`; others are
+left over from a method, service, adapter or dependency you removed from `goro.yaml`. Delete
+the leftovers.
 
 ### Actions
 `update` prints one line per file it acts on:

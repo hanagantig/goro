@@ -112,6 +112,6 @@ func printSummary(w io.Writer, command, workDir string, files []plannedFile) {
 			"Put the line back to let goro regenerate a file.\n", marker)
 	}
 	if counts[ActionOrphan] > 0 {
-		fmt.Fprintln(w, "orphan: goro.yaml doesn't describe these files; goro leaves them alone. Delete any that are left over from removed entries.")
+		fmt.Fprintln(w, "orphan: goro.yaml doesn't describe these files and packages; goro leaves them alone. Delete any that are left over from removed entries.")
 	}
 }
