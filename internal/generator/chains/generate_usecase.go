@@ -3,7 +3,6 @@ package chains
 import (
 	entity "github.com/hanagantig/goro/internal/config"
 	"github.com/hanagantig/goro/pkg/afero"
-	"github.com/iancoleman/strcase"
 )
 
 type generateUseCaseChain struct{}
@@ -53,7 +52,7 @@ func (g *generateUseCaseChain) Apply(fs *afero.Afero, data entity.Config) (*afer
 			return nil, err
 		}
 
-		err = fs.WriteFile(useCasePath+"/"+strcase.ToSnake(method)+".go.tmpl", methodGen, 0644)
+		err = fs.WriteFile(useCasePath+"/"+entity.MethodFile(method)+".tmpl", methodGen, 0644)
 		if err != nil {
 			return nil, err
 		}

@@ -5,8 +5,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/iancoleman/strcase"
-
 	entity "github.com/hanagantig/goro/internal/config"
 	"github.com/hanagantig/goro/pkg/afero"
 )
@@ -108,7 +106,7 @@ func (g *generateAdapterChain) Apply(fs *afero.Afero, data entity.Config) (*afer
 				return nil, err
 			}
 
-			err = fs.WriteFile(repoPath+"/"+strcase.ToSnake(method)+".go.tmpl", methodGen, 0644)
+			err = fs.WriteFile(repoPath+"/"+entity.MethodFile(method)+".tmpl", methodGen, 0644)
 			if err != nil {
 				return nil, err
 			}

@@ -10,7 +10,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/hanagantig/goro/internal/generator/chains"
+	"github.com/hanagantig/goro/internal/config"
 	"github.com/hanagantig/goro/pkg/afero"
 )
 
@@ -123,7 +123,7 @@ func dropDepFilesOfUserOwners(files []plannedFile) []plannedFile {
 
 	kept := make([]plannedFile, 0, len(files))
 	for _, f := range files {
-		if f.action == ActionCreate && owned[path.Dir(f.path)] && strings.HasPrefix(path.Base(f.path), chains.DepFilePrefix) {
+		if f.action == ActionCreate && owned[path.Dir(f.path)] && strings.HasPrefix(path.Base(f.path), config.DepFilePrefix) {
 			continue
 		}
 		kept = append(kept, f)

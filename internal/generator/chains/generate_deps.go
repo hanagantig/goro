@@ -1,15 +1,10 @@
 package chains
 
 import (
-	"github.com/iancoleman/strcase"
-
 	entity "github.com/hanagantig/goro/internal/config"
 	"github.com/hanagantig/goro/internal/generator"
 	"github.com/hanagantig/goro/pkg/afero"
 )
-
-// DepFilePrefix starts the name of every dependency interface file, dep_<snake name>.go.
-const DepFilePrefix = "dep_"
 
 type generateDepsChain struct{}
 
@@ -54,7 +49,7 @@ func (g *generateDepsChain) Apply(fs *afero.Afero, data entity.Config) (*afero.A
 			return err
 		}
 
-		return fs.WriteFile(dir+"/"+DepFilePrefix+strcase.ToSnake(dep)+".go", generated, 0644)
+		return fs.WriteFile(dir+"/"+entity.DepFile(dep), generated, 0644)
 	}
 
 	for _, dep := range data.UseCase.Deps {

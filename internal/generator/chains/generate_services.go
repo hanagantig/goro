@@ -3,8 +3,6 @@ package chains
 import (
 	"os"
 
-	"github.com/iancoleman/strcase"
-
 	entity "github.com/hanagantig/goro/internal/config"
 	"github.com/hanagantig/goro/pkg/afero"
 )
@@ -80,7 +78,7 @@ func (g *generateServicesChain) Apply(fs *afero.Afero, data entity.Config) (*afe
 				return nil, err
 			}
 
-			err = fs.WriteFile(path+"/"+strcase.ToSnake(method)+".go", generatedMethod, 0644)
+			err = fs.WriteFile(path+"/"+entity.MethodFile(method), generatedMethod, 0644)
 			if err != nil {
 				return nil, err
 			}
