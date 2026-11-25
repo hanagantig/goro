@@ -192,7 +192,8 @@ func (d *Document) Fill(key *yaml.Node, v Value) error {
 }
 
 // SetScalar sets key of the block mapping m to value. It replaces the scalar value on the key's
-// line, fills in a key written without a value, or inserts the key at the end of m.
+// line, fills in a key written without a value, or inserts the key at the end of m. It refuses a
+// value with an anchor or a tag.
 func (d *Document) SetScalar(m *yaml.Node, key, value string) error {
 	if m.Kind != yaml.MappingNode {
 		return fmt.Errorf("line %d: not a mapping", m.Line)
@@ -207,6 +208,10 @@ func (d *Document) SetScalar(m *yaml.Node, key, value string) error {
 	}
 	if v.Kind != yaml.ScalarNode {
 		return fmt.Errorf("line %d: %s isn't a scalar", v.Line, key)
+	}
+	if decorated(v) {
+		return fmt.Errorf("line %d: the value of %s has an anchor or a tag, which an alias may share, so it can't change in place; "+
+			"remove them or set the value by hand", v.Line, key)
 	}
 
 	text := scalarText(value)
