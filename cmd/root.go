@@ -25,7 +25,9 @@ func Execute() {
 func init() {
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
-	rootCmd.PersistentFlags().StringVar(&goroCnf, "config", "", "path to goro yaml file")
+	// goro.yaml in the project root describes the project (ADR 0002), so commands run in the
+	// root need no flag.
+	rootCmd.PersistentFlags().StringVar(&goroCnf, "config", "goro.yaml", "path to the goro.yaml to use")
 
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(updateCmd)

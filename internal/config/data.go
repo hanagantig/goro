@@ -2,8 +2,8 @@ package config
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/manifoldco/promptui"
@@ -23,7 +23,6 @@ type Config struct {
 	// Path is the file NewConfig read the config from, as it was passed; empty for a config
 	// that wasn't read from a file. A relative work_dir counts from its directory, and init
 	// copies goro.yaml from it into the project root (ADR 0002).
-	// Not set yet.
 	Path string `yaml:"-"`
 }
 
@@ -64,27 +63,36 @@ func (d Dependency) GetPackageName() string {
 	return ""
 }
 
+// NewConfig reads the goro.yaml at pathToFile. An empty path gives an empty config.
 func NewConfig(pathToFile string) (Config, error) {
 	if pathToFile == "" {
 		return Config{}, nil
 	}
 
-	return LoadDataFromYaml(pathToFile)
-}
-
-func LoadDataFromYaml(pathToFile string) (Config, error) {
-	var data Config
-
-	_, err := os.Stat(pathToFile)
+	data, err := os.ReadFile(pathToFile)
 	if err != nil {
-		return data, err
+		return Config{}, err
 	}
 
-	fileContents, _ := ioutil.ReadFile(pathToFile)
+	return ParseConfig(data, pathToFile)
+}
 
-	err = yaml.Unmarshal(fileContents, &data)
+// ParseConfig parses data, the content of the goro.yaml at path. The config records path in Path,
+// and a relative work_dir in it counts from the directory that holds the file (ADR 0002).
+func ParseConfig(data []byte, path string) (Config, error) {
+	var cfg Config
 
-	return data, err
+	err := yaml.Unmarshal(data, &cfg)
+	if err != nil {
+		return Config{}, fmt.Errorf("%s: %w", path, err)
+	}
+
+	cfg.Path = path
+	if wd := cfg.App.WorkDir; wd != "" && !filepath.IsAbs(wd) {
+		cfg.App.WorkDir = filepath.Join(filepath.Dir(path), wd)
+	}
+
+	return cfg, nil
 }
 
 func (c *Config) AskAndSetName() error {

@@ -2,8 +2,8 @@ package commands
 
 import "github.com/hanagantig/goro/internal/config"
 
-// LoadConfig reads the goro config at path and asks for the app name and work dir when the
-// config leaves them empty.
+// LoadConfig reads the goro config at path, with a relative work_dir counted from the directory
+// that holds it, and asks for the app name and work dir when the config leaves them empty.
 func LoadConfig(path string) (config.Config, error) {
 	cfg, err := config.NewConfig(path)
 	if err != nil {
