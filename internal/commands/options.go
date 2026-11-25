@@ -11,17 +11,17 @@ type Options struct {
 	// need the network, so in-process tests set it.
 	SkipGoMod bool
 
-	// DryRun makes Update print and return its actions without writing anything.
-	// Not implemented yet.
+	// DryRun makes Init and Update print and return their actions without writing anything: one
+	// line per file whose action isn't unchanged, a unified diff for each overwrite, and nothing
+	// else. It also leaves out the go mod steps. Init still refuses an existing goro project.
 	DryRun bool
 
 	// Out receives the printed report. Nil means os.Stdout.
-	// Not used yet.
 	Out io.Writer
 }
 
-// ErrProjectExists is returned by Init when the work dir already holds a goro project.
-// Not returned yet.
+// ErrProjectExists is returned, wrapped, by Init when the work dir already holds a goro project:
+// a Go file in internal/app carries the marker.
 var ErrProjectExists = errors.New("the work dir already holds a goro project; run goro update instead")
 
 // Action is what a run of Update does, or would do, with one path in the work dir.
@@ -53,7 +53,8 @@ type FileAction struct {
 }
 
 // Report lists what Update did, or would do under DryRun: one entry per file goro generates and
-// per orphan. Update doesn't fill it yet.
+// per orphan, sorted by path. Dep files that goro doesn't create next to an unmarked usecase.go
+// or service.go aren't listed.
 type Report struct {
 	Files []FileAction
 }

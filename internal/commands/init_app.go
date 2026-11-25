@@ -1,31 +1,30 @@
 package commands
 
 import (
+	"fmt"
+
 	"github.com/hanagantig/goro/internal/config"
-	"github.com/hanagantig/goro/internal/generator"
-	"github.com/hanagantig/goro/internal/generator/chains"
 )
 
-// Init generates a new project from cfg into cfg.App.WorkDir.
+// Init generates a new project from cfg into cfg.App.WorkDir. It writes through the same planner
+// as Update, so it never overwrites a file that is already there, and it refuses a work dir that
+// already holds a goro project with ErrProjectExists. A work dir that holds other files, such as
+// goro.yaml, is fine.
 func Init(cfg config.Config, opts Options) error {
 	err := cfg.Validate()
 	if err != nil {
 		return err
 	}
 
-	g := generator.NewGenerator(cfg)
-
-	g.AddChain(chains.NewFitFileNameChain())
-	g.AddChain(chains.NewGenerateAdapterChain())
-	g.AddChain(chains.NewGenerateServicesChain())
-	g.AddChain(chains.NewGenerateUseCaseChain())
-	g.AddChain(chains.NewGenerateCodeChain())
-	g.AddChain(chains.NewFitFileExtensionChain())
-	g.AddChain(chains.NewSaveFilesChain())
-	if !opts.SkipGoMod {
-		g.AddChain(chains.NewModInitChain())
-		g.AddChain(chains.NewModTidyChain())
+	exists, err := isGoroProject(cfg.App.WorkDir)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("init %s: %w", cfg.App.WorkDir, ErrProjectExists)
 	}
 
-	return g.Generate()
+	_, err = run(cfg, opts, "init", true)
+
+	return err
 }
