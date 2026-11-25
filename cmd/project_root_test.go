@@ -46,3 +46,20 @@ func TestNothingToAskAfterInitInTheProjectRoot(t *testing.T) {
 		}
 	}
 }
+
+// TestNoGoroYamlInTheCurrentDir: init and update in a directory without goro.yaml say how to
+// find one: run in the project root or pass --config.
+func TestNoGoroYamlInTheCurrentDir(t *testing.T) {
+	t.Chdir(t.TempDir())
+	dir := t.TempDir()
+
+	for _, args := range [][]string{{"init"}, {"update"}, {"update", "--dry-run"}} {
+		out, err := goro(t, dir, args...)
+		if err == nil {
+			t.Errorf("goro %s without goro.yaml succeeded:\n%s", strings.Join(args, " "), out)
+		}
+		if !strings.Contains(out, "--config") || !strings.Contains(out, "project root") {
+			t.Errorf("goro %s without goro.yaml doesn't point to the project root or --config:\n%s", strings.Join(args, " "), out)
+		}
+	}
+}

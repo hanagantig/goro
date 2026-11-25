@@ -385,3 +385,12 @@ func TestInitFillsInTheProjectsGoroYaml(t *testing.T) {
 		})
 	}
 }
+
+// TestLoadConfigWithoutGoroYaml: init and update load goro.yaml through LoadConfig; without one,
+// the error says where goro looked and how to point it elsewhere.
+func TestLoadConfigWithoutGoroYaml(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "goro.yaml")
+
+	_, err := commands.LoadConfig(path)
+	assertError(t, err, errorCheck{file: path, mentions: []string{"project root", "--config"}})
+}
