@@ -1,0 +1,14 @@
+package {{$.PkgName}}
+{{if $.Transactional}}
+import (
+	"{{ $.AppModule }}/internal/service"
+)
+{{end}}
+// {{$.Interface}} lists the {{$.Dep}} methods this package calls. goro created this file once and
+// never changes it, so the interface is yours to edit.
+type {{$.Interface}} interface {
+	{{- if $.Transactional}}
+	service.Transactor
+	{{- end}}
+	// TODO: add the {{$.Dep}} methods you need
+}

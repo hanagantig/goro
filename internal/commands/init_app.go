@@ -19,6 +19,7 @@ func Init(cfg config.Config, opts Options) error {
 	g.AddChain(chains.NewGenerateAdapterChain())
 	g.AddChain(chains.NewGenerateServicesChain())
 	g.AddChain(chains.NewGenerateUseCaseChain())
+	g.AddChain(chains.NewGenerateDepsChain())
 	g.AddChain(chains.NewGenerateCodeChain())
 	g.AddChain(chains.NewFitFileExtensionChain())
 	g.AddChain(chains.NewSaveFilesChain())

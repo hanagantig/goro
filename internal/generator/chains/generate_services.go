@@ -40,8 +40,6 @@ func (g *generateServicesChain) Apply(fs *afero.Afero, data entity.Config) (*afe
 		return nil, err
 	}
 
-	trxMap := data.Adapters.GetTransactionalMap()
-
 	for _, svc := range data.Services {
 		svc.AppModule = data.App.Module
 
@@ -54,15 +52,9 @@ func (g *generateServicesChain) Apply(fs *afero.Afero, data entity.Config) (*afe
 		}
 
 		svcData := struct {
-			Service    entity.Service
-			IsTrx      bool
-			TrxDeps    []string
-			NonTrxDeps []string
+			Service entity.Service
 		}{
-			Service:    svc,
-			IsTrx:      svc.CheckTransactionalDeps(trxMap),
-			TrxDeps:    svc.GetTransactionalDeps(trxMap),
-			NonTrxDeps: svc.GetNonTransactionalDeps(trxMap),
+			Service: svc,
 		}
 
 		generated, err := generate(path, svcTmpl, svcData)
