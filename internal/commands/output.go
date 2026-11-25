@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"io"
+	"path/filepath"
 	"strings"
 
 	"github.com/pmezard/go-difflib/difflib"
@@ -30,8 +31,8 @@ func printDryRun(w io.Writer, files []plannedFile) error {
 		diff, err := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
 			A:        splitLines(f.current),
 			B:        splitLines(f.rendered),
-			FromFile: "a/" + f.path,
-			ToFile:   "b/" + f.path,
+			FromFile: diffName("a", f.path),
+			ToFile:   diffName("b", f.path),
 			Context:  3,
 		})
 		if err != nil {
@@ -41,6 +42,15 @@ func printDryRun(w io.Writer, files []plannedFile) error {
 	}
 
 	return nil
+}
+
+// diffName names path in a diff header: under prefix, as git does, unless path is absolute.
+func diffName(prefix, path string) string {
+	if filepath.IsAbs(path) {
+		return path
+	}
+
+	return prefix + "/" + path
 }
 
 // noNewline follows a last line without a newline in a unified diff, as git writes it.
