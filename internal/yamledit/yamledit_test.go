@@ -2,6 +2,7 @@ package yamledit
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	"gopkg.in/yaml.v3"
@@ -264,4 +265,23 @@ func TestAnchorsAndTags(t *testing.T) {
 		check(t, d.InsertField(d.Root(), "extra", Map{{"k", List{"v"}}}))
 		assertText(t, d, "a: &x\n    b: 1\nc: !!seq\n- z\nextra:\n    k:\n    - v\n")
 	})
+}
+
+// TestSetScalarRefusesAnchorsAndTags: a scalar with an anchor or a tag can't be changed in place
+// safely, since an alias may share it, so SetScalar says why and changes nothing.
+func TestSetScalarRefusesAnchorsAndTags(t *testing.T) {
+	for _, in := range []string{
+		"app:\n  name: demo\n  work_dir: &wd \"\"\n",
+		"app:\n  name: demo\n  work_dir: !!str /abs\n",
+		"app:\n  name: demo\n  work_dir: &wd\n",
+	} {
+		d := parse(t, in)
+		err := d.SetScalar(node(t, d, "app"), "work_dir", ".")
+		if err == nil || !strings.Contains(err.Error(), "anchor or a tag") {
+			t.Errorf("%q: error = %v, want one that names the anchor or tag", in, err)
+		}
+		if got := string(d.Bytes()); got != in {
+			t.Errorf("%q: SetScalar changed the text to %q", in, got)
+		}
+	}
 }
