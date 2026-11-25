@@ -129,7 +129,7 @@ func (d *Document) AppendItems(seq *yaml.Node, items ...Value) error {
 		return ErrFlow
 	}
 
-	dash := seq.Column - 1
+	dash := d.dashColumn(seq)
 	lines, err := d.renderItems(items, dash)
 	if err != nil {
 		return err
@@ -150,7 +150,7 @@ func (d *Document) InsertField(m *yaml.Node, key string, v Value) error {
 		return ErrFlow
 	}
 
-	col := m.Column - 1
+	col := keyColumn(m)
 	lines, err := d.renderField(key, v, col)
 	if err != nil {
 		return err
@@ -305,6 +305,42 @@ func (d *Document) extend(line, col int) int {
 	return end
 }
 
+// dashColumn returns the column of the dashes of the block list seq. yaml.v3 puts a list with an
+// anchor or a tag at that anchor or tag, so for one the column comes from the first line after it
+// that starts with a dash.
+func (d *Document) dashColumn(seq *yaml.Node) int {
+	if !decorated(seq) {
+		return seq.Column - 1
+	}
+
+	last := seq.Line
+	if len(seq.Content) > 0 {
+		last = seq.Content[0].Line
+	}
+	for i := seq.Line + 1; i <= last && i <= len(d.lines); i++ {
+		if l := d.lines[i-1]; strings.HasPrefix(strings.TrimLeft(l, " "), "-") {
+			return indentOf(l)
+		}
+	}
+
+	return seq.Column - 1
+}
+
+// keyColumn returns the column of the keys of the block mapping m: that of its first key, since
+// yaml.v3 puts a mapping with an anchor or a tag at that anchor or tag.
+func keyColumn(m *yaml.Node) int {
+	if len(m.Content) > 0 {
+		return m.Content[0].Column - 1
+	}
+
+	return m.Column - 1
+}
+
+// decorated reports whether n has an anchor or an explicit tag in the text.
+func decorated(n *yaml.Node) bool {
+	return n.Anchor != "" || n.Style&yaml.TaggedStyle != 0
+}
+
 // lastLine returns the line of the last token of n.
 func lastLine(n *yaml.Node) int {
 	res := n.Line
@@ -350,20 +386,21 @@ func (d *Document) findLayout() layout {
 		case yaml.MappingNode:
 			for i := 0; i+1 < len(n.Content); i += 2 {
 				k, v := n.Content[i], n.Content[i+1]
-				if !IsFlow(v) && v.Line > k.Line {
+				if !IsFlow(v) && len(v.Content) > 0 && v.Content[0].Line > k.Line {
 					switch {
 					case v.Kind == yaml.MappingNode && l.mapIndent < 0:
-						l.mapIndent = v.Column - k.Column
+						l.mapIndent = keyColumn(v) - (k.Column - 1)
 					case v.Kind == yaml.SequenceNode && l.seqIndent < 0:
-						l.seqIndent = v.Column - k.Column
+						l.seqIndent = d.dashColumn(v) - (k.Column - 1)
 					}
 				}
 				walk(v)
 			}
 		case yaml.SequenceNode:
+			dash := d.dashColumn(n)
 			for _, item := range n.Content {
-				if item.Kind == yaml.MappingNode && !IsFlow(item) && l.itemIndent < 0 && d.dashBefore(item, n.Column-1) {
-					l.itemIndent = item.Column - n.Column
+				if item.Kind == yaml.MappingNode && !IsFlow(item) && l.itemIndent < 0 && d.dashBefore(item, dash) {
+					l.itemIndent = keyColumn(item) - dash
 				}
 				walk(item)
 			}

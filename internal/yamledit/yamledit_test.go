@@ -261,7 +261,7 @@ func TestAnchorsAndTags(t *testing.T) {
 
 	t.Run("the layout of anchored and tagged values", func(t *testing.T) {
 		d := parse(t, "a: &x\n    b: 1\nc: !!seq\n- z\n")
-		check(t, d.InsertField(d.Root(), "n", Map{{"k", List{"v"}}}))
-		assertText(t, d, "a: &x\n    b: 1\nc: !!seq\n- z\nn:\n    k:\n    - v\n")
+		check(t, d.InsertField(d.Root(), "extra", Map{{"k", List{"v"}}}))
+		assertText(t, d, "a: &x\n    b: 1\nc: !!seq\n- z\nextra:\n    k:\n    - v\n")
 	})
 }
